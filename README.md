@@ -152,16 +152,16 @@ The system uses a comprehensive database schema with 12 main tables:
 ## 🎨 Screenshots
 
 ### Public Homepage
-![Homepage](screenshot\home.png)
+![Homepage](screenshot/home.png)
 
 ### Admin Dashboard
-![Admin Dashboard](screenshot\admin.png)
+![Admin Dashboard](screenshot/admin.png)
 
 ### Customer Booking
-![Customer Booking](screenshot\customer.png)
+![Customer Booking](screenshot/customer.png)
 
 ### Vendor Portal
-![Vendor Portal](screenshot\vendor.png)
+![Vendor Portal](screenshot/vendor.png)
 
 ## 🔧 Configuration
 
