@@ -278,7 +278,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## 👥 Authors
 
-- **Your Name** - *Initial work* - [YourGitHub](https://github.com/shazwand989)
+- **Izwan Danial** - *Initial work* - [shazwand989](https://github.com/shazwand989)
 
 ## 🙏 Acknowledgments
 
