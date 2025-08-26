@@ -26,46 +26,84 @@ body {
     background-color: #fff;
 }
 
-/* Header Styles */
+/* Header Styles - Bootstrap 5 integration */
 .header {
     background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
     color: white;
-    padding: 1rem 0;
+    padding: 0;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 1rem 0;
+}
+
+.container-fluid {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 1rem;
 }
 
-.logo {
+.navbar-brand {
     font-size: 1.8rem;
     font-weight: bold;
-    text-decoration: none;
-    color: white;
+    color: white !important;
 }
 
-.nav-menu {
-    display: flex;
-    list-style: none;
-    gap: 2rem;
+.navbar-brand:hover {
+    color: rgba(255,255,255,0.9) !important;
 }
 
-.nav-menu a {
-    color: white;
-    text-decoration: none;
-    padding: 0.5rem 1rem;
+.navbar-toggler {
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.navbar-toggler:hover {
+    border-color: rgba(255,255,255,0.5);
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.25rem rgba(255,255,255,0.25);
+}
+
+.navbar-toggler-icon {
+    display: block;
+    width: 1.5em;
+    height: 1.125em;
+    position: relative;
+    background: none;
+}
+
+.navbar-toggler-icon .bar {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background-color: white;
+    border-radius: 1px;
+    position: absolute;
+    transition: all 0.3s ease;
+}
+
+.navbar-toggler-icon .bar:nth-child(1) { top: 0; }
+.navbar-toggler-icon .bar:nth-child(2) { top: 50%; transform: translateY(-50%); }
+.navbar-toggler-icon .bar:nth-child(3) { bottom: 0; }
+
+.navbar-nav {
+    gap: 0.5rem;
+}
+
+.nav-link {
+    color: white !important;
+    padding: 0.5rem 1rem !important;
     border-radius: 5px;
     transition: background-color 0.3s;
 }
 
-.nav-menu a:hover {
-    background-color: rgba(255,255,255,0.2);
+.nav-link:hover {
+    background-color: rgba(255,255,255,0.2) !important;
+    color: white !important;
 }
 
 /* Container */
@@ -428,18 +466,34 @@ body {
     color: var(--text-color);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .navbar {
-        flex-direction: column;
-        gap: 1rem;
+/* Responsive Design - Bootstrap 5 integration */
+@media (max-width: 991.98px) {
+    .navbar-nav {
+        background: rgba(0,0,0,0.1);
+        border-radius: 0.5rem;
+        padding: 0.5rem 0;
+        margin-top: 0.5rem;
     }
-    
-    .nav-menu {
-        flex-direction: column;
-        gap: 0.5rem;
+
+    .nav-link {
+        border-bottom: 1px solid rgba(255,255,255,0.1) !important;
     }
-    
+
+    .nav-item:last-child .nav-link {
+        border-bottom: none !important;
+    }
+
+    /* Animate toggler to X when collapsed */
+    .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon .bar:nth-child(1) {
+        transform: translateY(0.5625em) rotate(45deg);
+    }
+    .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon .bar:nth-child(2) {
+        opacity: 0;
+    }
+    .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon .bar:nth-child(3) {
+        transform: translateY(-0.5625em) rotate(-45deg);
+    }
+
     .hero h1 {
         font-size: 2rem;
     }

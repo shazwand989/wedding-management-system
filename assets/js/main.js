@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeDatePickers();
     initializeAjaxForms();
     initializeSidebar();
+    initializeNavbar();
 });
 
 // Modal functionality
@@ -275,6 +276,30 @@ function initializeSidebar() {
     if (menuToggle && sidebar) {
         menuToggle.addEventListener('click', function() {
             sidebar.classList.toggle('show');
+        });
+    }
+}
+
+// Navbar mobile toggle - Bootstrap 5 native
+function initializeNavbar() {
+    // Bootstrap 5 handles the collapse functionality automatically
+    // We just need to add some custom behavior for anchor links
+    const navbarCollapse = document.querySelector('.navbar-collapse');
+    
+    if (navbarCollapse) {
+        // Close menu when anchor links are clicked
+        const navLinks = navbarCollapse.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                // Only auto-close if it's an anchor link (starts with #)
+                if (link.getAttribute('href')?.startsWith('#')) {
+                    // Use Bootstrap's collapse instance to hide the menu
+                    const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+                    if (bsCollapse) {
+                        bsCollapse.hide();
+                    }
+                }
+            });
         });
     }
 }
