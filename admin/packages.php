@@ -17,6 +17,11 @@ $page_description = 'Manage wedding packages and pricing';
 
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    // Clean any potential output buffer
+    if (ob_get_length()) {
+        ob_clean();
+    }
+    
     header('Content-Type: application/json');
 
     try {
@@ -679,49 +684,134 @@ function addPackage() {
         const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
         const action = newStatus === 'active' ? 'activate' : 'deactivate';
 
-        if (confirm(`Are you sure you want to ${action} this package?`)) {
-            fetch('packages.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `action=toggle_status&id=${packageId}&current_status=${currentStatus}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
+        Swal.fire({
+            title: `${action.charAt(0).toUpperCase() + action.slice(1)} Package?`,
+            text: `Are you sure you want to ${action} this package?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: newStatus === 'active' ? '#28a745' : '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Yes, ${action} it!`,
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading state
+                Swal.fire({
+                    title: `${action.charAt(0).toUpperCase() + action.slice(1)}ing...`,
+                    text: 'Please wait while we update the package status.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
                     }
-                })
-                .catch(error => {
-                    alert('Error updating package status');
                 });
-        }
+
+                fetch('packages.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `action=toggle_status&id=${packageId}&current_status=${currentStatus}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Success!',
+                                text: `Package has been ${action}d successfully.`,
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: data.message || 'An error occurred while updating the package status.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'An error occurred while updating the package status.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+            }
+        });
     }
 
     function deletePackage(packageId) {
-        if (confirm('Are you sure you want to delete this package? This action cannot be undone.')) {
-            fetch('packages.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `action=delete_package&id=${packageId}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You won\'t be able to revert this! This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading state
+                Swal.fire({
+                    title: 'Deleting...',
+                    text: 'Please wait while we delete the package.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
                     }
-                })
-                .catch(error => {
-                    alert('Error deleting package');
                 });
-        }
+
+                fetch('packages.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `action=delete_package&id=${packageId}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Deleted!',
+                                text: 'Package has been deleted successfully.',
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: data.message || 'An error occurred while deleting the package.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'An error occurred while deleting the package.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+            }
+        });
     }
 
     function exportPackages() {
@@ -748,12 +838,27 @@ function addPackage() {
                 body: formData
             })
             .then(response => {
+                console.log('Response status:', response.status); // Debug log
+                console.log('Response headers:', response.headers); // Debug log
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                return response.json();
+                return response.text(); // Get as text first to see what we're receiving
+            })
+            .then(text => {
+                console.log('Raw response text:', text); // Debug log
+                try {
+                    const data = JSON.parse(text);
+                    console.log('Parsed data:', data); // Debug log
+                    return data;
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    console.error('Response text was:', text);
+                    throw new Error('Invalid JSON response: ' + parseError.message);
+                }
             })
             .then(data => {
+                console.log('Response received:', data); // Debug log
                 if (data.success) {
                     // Hide modal first
                     const packageModal = bootstrap.Modal.getInstance(document.getElementById('packageModal'));
@@ -763,12 +868,29 @@ function addPackage() {
                     
                     // Show success message
                     const alertDiv = document.createElement('div');
-                    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show mb-3';
                     alertDiv.innerHTML = `
                         <strong>Success!</strong> Package ${isEdit ? 'updated' : 'added'} successfully.
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     `;
-                    document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+                    
+                    // Insert alert at the top of main content area
+                    const mainContent = document.querySelector('.main-content');
+                    if (mainContent) {
+                        // Find the first card or content element and insert before it
+                        const firstCard = mainContent.querySelector('.card, .row');
+                        if (firstCard) {
+                            mainContent.insertBefore(alertDiv, firstCard);
+                        } else {
+                            mainContent.appendChild(alertDiv);
+                        }
+                    } else {
+                        // Fallback: insert after the page header
+                        const header = document.querySelector('h1');
+                        if (header && header.parentNode) {
+                            header.parentNode.insertBefore(alertDiv, header.nextSibling);
+                        }
+                    }
                     
                     // Reload page after a short delay
                     setTimeout(() => {
@@ -779,8 +901,10 @@ function addPackage() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('Error saving package. Please try again.');
+                console.error('Error details:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                alert('Error saving package: ' + error.message + '. Please check the console for more details and try again.');
             })
             .finally(() => {
                 // Re-enable submit button

@@ -199,30 +199,60 @@ include 'layouts/sidebar.php';
 <?php include 'layouts/footer.php'; ?>
 <script>
     function updateVendorStatus(vendorId, status) {
-        if (confirm(`Are you sure you want to \${status === 'active' ? 'approve' : 'reject'} this vendor?`)) {
-            const formData = new FormData();
-            formData.append('action', 'update_vendor_status');
-            formData.append('vendor_id', vendorId);
-            formData.append('status', status);
+        const action = status === 'active' ? 'approve' : 'reject';
+        
+        Swal.fire({
+            title: `${action.charAt(0).toUpperCase() + action.slice(1)} Vendor?`,
+            text: `Are you sure you want to ${action} this vendor?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: status === 'active' ? '#28a745' : '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Yes, ${action} it!`,
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const formData = new FormData();
+                formData.append('action', 'update_vendor_status');
+                formData.append('vendor_id', vendorId);
+                formData.append('status', status);
 
-            fetch('includes/ajax_handler.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        WeddingManagement.showNotification(data.message, 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        WeddingManagement.showNotification(data.message, 'danger');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    WeddingManagement.showNotification('An error occurred.', 'danger');
-                });
-        }
+                fetch('includes/ajax_handler.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Success!',
+                                text: data.message,
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: data.message || 'An error occurred.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'An error occurred while updating vendor status.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+            }
+        });
     }
 
     // Load upcoming events calendar
