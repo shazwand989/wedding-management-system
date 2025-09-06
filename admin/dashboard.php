@@ -23,7 +23,7 @@ try {
     $pending_bookings = $stmt->fetch()['total'];
 
     // Total revenue
-    $stmt = $pdo->query("SELECT SUM(total_amount) as total FROM bookings WHERE booking_status = 'completed'");
+    $stmt = $pdo->query("SELECT COALESCE(SUM(total_amount), 0) as total FROM bookings WHERE booking_status = 'completed'");
     $total_revenue = $stmt->fetch()['total'] ?? 0;
 
     // Total vendors

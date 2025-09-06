@@ -1,84 +1,446 @@
 <?php
+session_start();
 require_once 'config.php';
 
-header('Content-Type: application/json');
-
-if ($_POST) {
-    try {
-        $action = $_POST['action'] ?? '';
-        
-        switch ($action) {
-            case 'update_vendor_status':
-                if (!isLoggedIn() || getUserRole() !== 'admin') {
-                    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-                    exit;
-                }
-                
-                $vendor_id = (int)$_POST['vendor_id'];
-                $status = sanitize($_POST['status']);
-                
-                if (!in_array($status, ['active', 'inactive'])) {
-                    echo json_encode(['success' => false, 'message' => 'Invalid status']);
-                    exit;
-                }
-                
-                $stmt = $pdo->prepare("UPDATE vendors SET status = ? WHERE id = ?");
-                if ($stmt->execute([$status, $vendor_id])) {
-                    echo json_encode([
-                        'success' => true, 
-                        'message' => 'Vendor status updated successfully'
-                    ]);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Failed to update status']);
-                }
-                break;
-                
-            case 'update_booking_status':
-                if (!isLoggedIn()) {
-                    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-                    exit;
-                }
-                
-                $booking_id = (int)$_POST['booking_id'];
-                $status = sanitize($_POST['status']);
-                $user_role = getUserRole();
-                
-                // Check permissions
-                if ($user_role === 'vendor') {
-                    // Vendor can only update booking_vendors status
-                    $vendor_id = (int)$_POST['vendor_id'];
-                    $stmt = $pdo->prepare("UPDATE booking_vendors SET status = ? WHERE booking_id = ? AND vendor_id = ?");
-                    $success = $stmt->execute([$status, $booking_id, $vendor_id]);
-                } elseif ($user_role === 'admin') {
-                    // Admin can update booking status
-                    $stmt = $pdo->prepare("UPDATE bookings SET booking_status = ? WHERE id = ?");
-                    $success = $stmt->execute([$status, $booking_id]);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-                    exit;
-                }
-                
-                if ($success) {
-                    echo json_encode([
-                        'success' => true, 
-                        'message' => 'Status updated successfully'
-                    ]);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Failed to update status']);
-                }
-                break;
-                
-            default:
-                echo json_encode(['success' => false, 'message' => 'Invalid action']);
-                break;
-        }
-        
-    } catch (PDOException $e) {
-        echo json_encode(['success' => false, 'message' => 'Database error occurred']);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => 'An error occurred']);
-    }
-} else {
-    echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    exit();
 }
-?>
+
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
+
+try {
+    switch ($action) {
+        case 'get_upcoming_events':
+            // Get upcoming events for the current user
+            $user_role = $_SESSION['user_role'];
+            $user_id = $_SESSION['user_id'];
+            
+            if ($user_role === 'customer') {
+                $stmt = $pdo->prepare("
+                    SELECT id, event_date, event_time, venue_name, booking_status 
+                    FROM bookings 
+                    WHERE customer_id = ? AND event_date >= CURDATE() 
+                    ORDER BY event_date ASC LIMIT 5
+                ");
+                $stmt->execute([$user_id]);
+            } elseif ($user_role === 'vendor') {
+                $stmt = $pdo->prepare("
+                    SELECT b.id, b.event_date, b.event_time, b.venue_name, b.booking_status,
+                           bv.status as vendor_status
+                    FROM bookings b
+                    JOIN booking_vendors bv ON b.id = bv.booking_id
+                    JOIN vendors v ON bv.vendor_id = v.id
+                    WHERE v.user_id = ? AND b.event_date >= CURDATE()
+                    ORDER BY b.event_date ASC LIMIT 5
+                ");
+                $stmt->execute([$user_id]);
+            } else {
+                // Admin - get all upcoming events
+                $stmt = $pdo->prepare("
+                    SELECT b.id, b.event_date, b.event_time, b.venue_name, b.booking_status,
+                           u.full_name as customer_name
+                    FROM bookings b
+                    LEFT JOIN users u ON b.customer_id = u.id
+                    WHERE b.event_date >= CURDATE()
+                    ORDER BY b.event_date ASC LIMIT 5
+                ");
+                $stmt->execute();
+            }
+            
+            $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(['success' => true, 'events' => $events]);
+            break;
+
+        case 'get_booking_details':
+            $booking_id = (int)$_GET['id'];
+            
+            $stmt = $pdo->prepare("
+                SELECT b.*, u.full_name as customer_name, u.email, u.phone,
+                       wp.name as package_name
+                FROM bookings b
+                LEFT JOIN users u ON b.customer_id = u.id
+                LEFT JOIN wedding_packages wp ON b.package_id = wp.id
+                WHERE b.id = ?
+            ");
+            $stmt->execute([$booking_id]);
+            $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$booking) {
+                throw new Exception('Booking not found');
+            }
+            
+            // Get booking vendors
+            $stmt = $pdo->prepare("
+                SELECT bv.*, v.business_name, v.service_type
+                FROM booking_vendors bv
+                LEFT JOIN vendors v ON bv.vendor_id = v.id
+                WHERE bv.booking_id = ?
+            ");
+            $stmt->execute([$booking_id]);
+            $vendors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Get payments
+            $stmt = $pdo->prepare("
+                SELECT * FROM payments 
+                WHERE booking_id = ? 
+                ORDER BY payment_date DESC
+            ");
+            $stmt->execute([$booking_id]);
+            $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $html = "<div class='row'>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Customer Information</h6>";
+            $html .= "<p><strong>Name:</strong> " . htmlspecialchars($booking['customer_name']) . "</p>";
+            $html .= "<p><strong>Email:</strong> " . htmlspecialchars($booking['email']) . "</p>";
+            $html .= "<p><strong>Phone:</strong> " . htmlspecialchars($booking['phone'] ?: 'Not provided') . "</p>";
+            $html .= "</div>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Event Details</h6>";
+            $html .= "<p><strong>Date:</strong> " . date('M j, Y', strtotime($booking['event_date'])) . "</p>";
+            $html .= "<p><strong>Time:</strong> " . date('g:i A', strtotime($booking['event_time'])) . "</p>";
+            $html .= "<p><strong>Venue:</strong> " . htmlspecialchars($booking['venue_name'] ?: 'Not specified') . "</p>";
+            $html .= "<p><strong>Guests:</strong> " . number_format($booking['guest_count']) . "</p>";
+            $html .= "</div>";
+            $html .= "</div>";
+            
+            echo json_encode(['success' => true, 'html' => $html]);
+            break;
+
+        case 'get_customer_details':
+            $customer_id = (int)$_GET['id'];
+            
+            $stmt = $pdo->prepare("
+                SELECT u.*, 
+                       COUNT(b.id) as total_bookings,
+                       SUM(b.total_amount) as total_spent,
+                       MAX(b.created_at) as last_booking_date
+                FROM users u
+                LEFT JOIN bookings b ON u.id = b.customer_id
+                WHERE u.id = ? AND u.role = 'customer'
+                GROUP BY u.id
+            ");
+            $stmt->execute([$customer_id]);
+            $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$customer) {
+                throw new Exception('Customer not found');
+            }
+            
+            $html = "<div class='row'>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Customer Information</h6>";
+            $html .= "<p><strong>Name:</strong> " . htmlspecialchars($customer['full_name']) . "</p>";
+            $html .= "<p><strong>Email:</strong> " . htmlspecialchars($customer['email']) . "</p>";
+            $html .= "<p><strong>Phone:</strong> " . htmlspecialchars($customer['phone'] ?: 'Not provided') . "</p>";
+            $html .= "<p><strong>Status:</strong> <span class='badge bg-" . ($customer['status'] === 'active' ? 'success' : 'danger') . "'>" . ucfirst($customer['status']) . "</span></p>";
+            $html .= "</div>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Booking Statistics</h6>";
+            $html .= "<p><strong>Total Bookings:</strong> " . number_format($customer['total_bookings']) . "</p>";
+            $html .= "<p><strong>Total Spent:</strong> RM " . number_format($customer['total_spent'] ?: 0, 2) . "</p>";
+            if ($customer['last_booking_date']) {
+                $html .= "<p><strong>Last Booking:</strong> " . date('M j, Y', strtotime($customer['last_booking_date'])) . "</p>";
+            }
+            $html .= "</div>";
+            $html .= "</div>";
+            
+            echo json_encode(['success' => true, 'html' => $html]);
+            break;
+
+        case 'get_customer_data':
+            $customer_id = (int)$_GET['id'];
+            
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? AND role = 'customer'");
+            $stmt->execute([$customer_id]);
+            $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$customer) {
+                throw new Exception('Customer not found');
+            }
+            
+            echo json_encode(['success' => true, 'customer' => $customer]);
+            break;
+
+        case 'add_customer':
+        case 'update_customer':
+            if ($_SESSION['user_role'] !== 'admin') {
+                throw new Exception('Unauthorized');
+            }
+            
+            $full_name = trim($_POST['full_name']);
+            $email = trim($_POST['email']);
+            $phone = trim($_POST['phone']);
+            $address = trim($_POST['address']);
+            $status = $_POST['status'];
+            
+            if (empty($full_name) || empty($email)) {
+                throw new Exception('Full name and email are required');
+            }
+            
+            if ($action === 'add_customer') {
+                // Check if email already exists
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+                $stmt->execute([$email]);
+                if ($stmt->fetch()) {
+                    throw new Exception('Email already exists');
+                }
+                
+                $password = password_hash('password123', PASSWORD_DEFAULT); // Default password
+                $stmt = $pdo->prepare("INSERT INTO users (email, password, role, full_name, phone, address, status) VALUES (?, ?, 'customer', ?, ?, ?, ?)");
+                $stmt->execute([$email, $password, $full_name, $phone, $address, $status]);
+                
+                echo json_encode(['success' => true, 'message' => 'Customer added successfully']);
+            } else {
+                $customer_id = (int)$_POST['customer_id'];
+                
+                // Check if email exists for other users
+                $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+                $stmt->execute([$email, $customer_id]);
+                if ($stmt->fetch()) {
+                    throw new Exception('Email already exists');
+                }
+                
+                $stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ?, phone = ?, address = ?, status = ? WHERE id = ? AND role = 'customer'");
+                $stmt->execute([$full_name, $email, $phone, $address, $status, $customer_id]);
+                
+                echo json_encode(['success' => true, 'message' => 'Customer updated successfully']);
+            }
+            break;
+
+        case 'get_vendor_details':
+            $vendor_id = (int)$_GET['id'];
+            
+            $stmt = $pdo->prepare("
+                SELECT v.*, u.full_name, u.email, u.phone, u.address,
+                       COUNT(bv.id) as total_bookings,
+                       AVG(r.rating) as avg_rating,
+                       COUNT(r.id) as review_count
+                FROM vendors v
+                LEFT JOIN users u ON v.user_id = u.id
+                LEFT JOIN booking_vendors bv ON v.id = bv.vendor_id
+                LEFT JOIN reviews r ON v.id = r.vendor_id
+                WHERE v.id = ?
+                GROUP BY v.id
+            ");
+            $stmt->execute([$vendor_id]);
+            $vendor = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$vendor) {
+                throw new Exception('Vendor not found');
+            }
+            
+            $html = "<div class='row'>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Vendor Information</h6>";
+            $html .= "<p><strong>Business Name:</strong> " . htmlspecialchars($vendor['business_name']) . "</p>";
+            $html .= "<p><strong>Owner:</strong> " . htmlspecialchars($vendor['full_name']) . "</p>";
+            $html .= "<p><strong>Service Type:</strong> " . ucfirst($vendor['service_type']) . "</p>";
+            $html .= "<p><strong>Price Range:</strong> " . htmlspecialchars($vendor['price_range'] ?: 'Not specified') . "</p>";
+            $html .= "</div>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Performance</h6>";
+            $html .= "<p><strong>Total Bookings:</strong> " . number_format($vendor['total_bookings']) . "</p>";
+            if ($vendor['avg_rating']) {
+                $html .= "<p><strong>Rating:</strong> " . number_format($vendor['avg_rating'], 1) . "/5 (" . $vendor['review_count'] . " reviews)</p>";
+            } else {
+                $html .= "<p><strong>Rating:</strong> No ratings yet</p>";
+            }
+            $html .= "<p><strong>Status:</strong> <span class='badge bg-" . ($vendor['status'] === 'active' ? 'success' : ($vendor['status'] === 'pending' ? 'warning' : 'danger')) . "'>" . ucfirst($vendor['status']) . "</span></p>";
+            $html .= "</div>";
+            $html .= "</div>";
+            if ($vendor['description']) {
+                $html .= "<div class='mt-3'>";
+                $html .= "<h6>Description</h6>";
+                $html .= "<p>" . nl2br(htmlspecialchars($vendor['description'])) . "</p>";
+                $html .= "</div>";
+            }
+            
+            echo json_encode(['success' => true, 'html' => $html]);
+            break;
+
+        case 'get_package_data':
+            $package_id = (int)$_GET['id'];
+            
+            $stmt = $pdo->prepare("SELECT * FROM wedding_packages WHERE id = ?");
+            $stmt->execute([$package_id]);
+            $package = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$package) {
+                throw new Exception('Package not found');
+            }
+            
+            echo json_encode(['success' => true, 'package' => $package]);
+            break;
+
+        case 'get_package_details':
+            $package_id = (int)$_GET['id'];
+            
+            $stmt = $pdo->prepare("
+                SELECT wp.*, 
+                       COUNT(b.id) as total_bookings,
+                       SUM(CASE WHEN b.booking_status = 'completed' THEN 1 ELSE 0 END) as completed_bookings,
+                       SUM(b.total_amount) as total_revenue
+                FROM wedding_packages wp
+                LEFT JOIN bookings b ON wp.id = b.package_id
+                WHERE wp.id = ?
+                GROUP BY wp.id
+            ");
+            $stmt->execute([$package_id]);
+            $package = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$package) {
+                throw new Exception('Package not found');
+            }
+            
+            $features = json_decode($package['features'], true) ?: [];
+            
+            $html = "<div class='row'>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Package Details</h6>";
+            $html .= "<p><strong>Price:</strong> RM " . number_format($package['price'], 2) . "</p>";
+            $html .= "<p><strong>Duration:</strong> " . $package['duration_hours'] . " hours</p>";
+            $html .= "<p><strong>Max Guests:</strong> " . number_format($package['max_guests']) . "</p>";
+            $html .= "<p><strong>Status:</strong> <span class='badge bg-" . ($package['status'] === 'active' ? 'success' : 'secondary') . "'>" . ucfirst($package['status']) . "</span></p>";
+            $html .= "</div>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Performance</h6>";
+            $html .= "<p><strong>Total Bookings:</strong> " . number_format($package['total_bookings']) . "</p>";
+            $html .= "<p><strong>Completed:</strong> " . number_format($package['completed_bookings']) . "</p>";
+            $html .= "<p><strong>Total Revenue:</strong> RM " . number_format($package['total_revenue'] ?: 0, 2) . "</p>";
+            $html .= "</div>";
+            $html .= "</div>";
+            if ($package['description']) {
+                $html .= "<div class='mt-3'>";
+                $html .= "<h6>Description</h6>";
+                $html .= "<p>" . nl2br(htmlspecialchars($package['description'])) . "</p>";
+                $html .= "</div>";
+            }
+            if (!empty($features)) {
+                $html .= "<div class='mt-3'>";
+                $html .= "<h6>Features</h6>";
+                $html .= "<ul>";
+                foreach ($features as $feature) {
+                    $html .= "<li>" . htmlspecialchars($feature) . "</li>";
+                }
+                $html .= "</ul>";
+                $html .= "</div>";
+            }
+            
+            echo json_encode(['success' => true, 'html' => $html]);
+            break;
+
+        case 'get_payment_details':
+            $payment_id = (int)$_GET['id'];
+            
+            $stmt = $pdo->prepare("
+                SELECT p.*, b.id as booking_id, b.total_amount, b.event_date,
+                       u.full_name as customer_name, u.email
+                FROM payments p
+                LEFT JOIN bookings b ON p.booking_id = b.id
+                LEFT JOIN users u ON b.customer_id = u.id
+                WHERE p.id = ?
+            ");
+            $stmt->execute([$payment_id]);
+            $payment = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$payment) {
+                throw new Exception('Payment not found');
+            }
+            
+            $html = "<div class='row'>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Payment Information</h6>";
+            $html .= "<p><strong>Amount:</strong> RM " . number_format($payment['amount'], 2) . "</p>";
+            $html .= "<p><strong>Method:</strong> " . ucfirst(str_replace('_', ' ', $payment['payment_method'])) . "</p>";
+            $html .= "<p><strong>Date:</strong> " . date('M j, Y', strtotime($payment['payment_date'])) . "</p>";
+            $html .= "<p><strong>Status:</strong> <span class='badge bg-" . ($payment['status'] === 'completed' ? 'success' : ($payment['status'] === 'pending' ? 'warning' : 'danger')) . "'>" . ucfirst($payment['status']) . "</span></p>";
+            if ($payment['transaction_id']) {
+                $html .= "<p><strong>Transaction ID:</strong> " . htmlspecialchars($payment['transaction_id']) . "</p>";
+            }
+            $html .= "</div>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Booking Information</h6>";
+            $html .= "<p><strong>Booking ID:</strong> #" . $payment['booking_id'] . "</p>";
+            $html .= "<p><strong>Customer:</strong> " . htmlspecialchars($payment['customer_name']) . "</p>";
+            $html .= "<p><strong>Event Date:</strong> " . date('M j, Y', strtotime($payment['event_date'])) . "</p>";
+            $html .= "<p><strong>Total Amount:</strong> RM " . number_format($payment['total_amount'], 2) . "</p>";
+            $html .= "</div>";
+            $html .= "</div>";
+            if ($payment['notes']) {
+                $html .= "<div class='mt-3'>";
+                $html .= "<h6>Notes</h6>";
+                $html .= "<p>" . nl2br(htmlspecialchars($payment['notes'])) . "</p>";
+                $html .= "</div>";
+            }
+            
+            echo json_encode(['success' => true, 'html' => $html]);
+            break;
+
+        case 'system_health':
+            // Simple system health check
+            $health = [
+                'database' => 'OK',
+                'php_version' => PHP_VERSION,
+                'memory_usage' => memory_get_usage(true),
+                'timestamp' => date('Y-m-d H:i:s')
+            ];
+            
+            echo json_encode(['success' => true, 'status' => 'System is healthy', 'details' => $health]);
+            break;
+
+        // Legacy actions for backward compatibility
+        case 'update_vendor_status':
+            if ($_SESSION['user_role'] !== 'admin') {
+                throw new Exception('Unauthorized');
+            }
+            
+            $vendor_id = (int)$_POST['vendor_id'];
+            $status = $_POST['status'];
+            
+            if (!in_array($status, ['active', 'inactive'])) {
+                throw new Exception('Invalid status');
+            }
+            
+            $stmt = $pdo->prepare("UPDATE vendors SET status = ? WHERE id = ?");
+            $stmt->execute([$status, $vendor_id]);
+            
+            echo json_encode(['success' => true, 'message' => 'Vendor status updated successfully']);
+            break;
+            
+        case 'update_booking_status':
+            if (!isset($_SESSION['user_id'])) {
+                throw new Exception('Unauthorized');
+            }
+            
+            $booking_id = (int)$_POST['booking_id'];
+            $status = $_POST['status'];
+            $user_role = $_SESSION['user_role'];
+            
+            // Check permissions
+            if ($user_role === 'vendor') {
+                // Vendor can only update booking_vendors status
+                $vendor_id = (int)$_POST['vendor_id'];
+                $stmt = $pdo->prepare("UPDATE booking_vendors SET status = ? WHERE booking_id = ? AND vendor_id = ?");
+                $stmt->execute([$status, $booking_id, $vendor_id]);
+            } elseif ($user_role === 'admin') {
+                // Admin can update booking status
+                $stmt = $pdo->prepare("UPDATE bookings SET booking_status = ? WHERE id = ?");
+                $stmt->execute([$status, $booking_id]);
+            } else {
+                throw new Exception('Unauthorized');
+            }
+            
+            echo json_encode(['success' => true, 'message' => 'Status updated successfully']);
+            break;
+            
+        default:
+            throw new Exception('Invalid action');
+    }
+    
+} catch (Exception $e) {
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+}
