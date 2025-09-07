@@ -436,6 +436,241 @@ try {
             
             echo json_encode(['success' => true, 'message' => 'Status updated successfully']);
             break;
+
+        case 'get_booking_details':
+            $booking_vendor_id = (int)$_GET['booking_vendor_id'];
+            
+            $stmt = $pdo->prepare("
+                SELECT bv.*, b.*, u.full_name as customer_name, u.email as customer_email, u.phone as customer_phone,
+                       wp.name as package_name, wp.price as package_price,
+                       v.business_name as vendor_business_name
+                FROM booking_vendors bv
+                JOIN bookings b ON bv.booking_id = b.id
+                JOIN users u ON b.customer_id = u.id
+                LEFT JOIN wedding_packages wp ON b.package_id = wp.id
+                LEFT JOIN vendors v ON bv.vendor_id = v.id
+                WHERE bv.id = ?
+            ");
+            $stmt->execute([$booking_vendor_id]);
+            $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$booking) {
+                throw new Exception('Booking not found');
+            }
+            
+            $html = "<div class='row'>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Customer Information</h6>";
+            $html .= "<p><strong>Name:</strong> " . htmlspecialchars($booking['customer_name']) . "</p>";
+            $html .= "<p><strong>Email:</strong> " . htmlspecialchars($booking['customer_email']) . "</p>";
+            $html .= "<p><strong>Phone:</strong> " . htmlspecialchars($booking['customer_phone'] ?: 'Not provided') . "</p>";
+            $html .= "</div>";
+            $html .= "<div class='col-md-6'>";
+            $html .= "<h6>Event Details</h6>";
+            $html .= "<p><strong>Date:</strong> " . date('M j, Y', strtotime($booking['event_date'])) . "</p>";
+            $html .= "<p><strong>Time:</strong> " . date('g:i A', strtotime($booking['event_time'])) . "</p>";
+            $html .= "<p><strong>Venue:</strong> " . htmlspecialchars($booking['venue_name'] ?: 'Not specified') . "</p>";
+            $html .= "<p><strong>Guests:</strong> " . number_format($booking['guest_count']) . "</p>";
+            $html .= "</div>";
+            $html .= "</div>";
+            
+            if ($booking['package_name']) {
+                $html .= "<div class='mt-3'>";
+                $html .= "<h6>Package Information</h6>";
+                $html .= "<p><strong>Package:</strong> " . htmlspecialchars($booking['package_name']) . "</p>";
+                $html .= "<p><strong>Package Price:</strong> RM " . number_format($booking['package_price'], 2) . "</p>";
+                $html .= "</div>";
+            }
+            
+            if ($booking['special_requests']) {
+                $html .= "<div class='mt-3'>";
+                $html .= "<h6>Special Requests</h6>";
+                $html .= "<p>" . nl2br(htmlspecialchars($booking['special_requests'])) . "</p>";
+                $html .= "</div>";
+            }
+            
+            if ($booking['agreed_price']) {
+                $html .= "<div class='mt-3'>";
+                $html .= "<h6>Service Agreement</h6>";
+                $html .= "<p><strong>Agreed Price:</strong> RM " . number_format($booking['agreed_price'], 2) . "</p>";
+                if ($booking['notes']) {
+                    $html .= "<p><strong>Notes:</strong> " . nl2br(htmlspecialchars($booking['notes'])) . "</p>";
+                }
+                $html .= "</div>";
+            }
+            
+            echo $html;
+            break;
+
+        case 'get_day_events':
+            if ($_SESSION['user_role'] !== 'vendor') {
+                throw new Exception('Unauthorized');
+            }
+            
+            $vendor_id = (int)$_GET['vendor_id'];
+            $date = $_GET['date'];
+            
+            $stmt = $pdo->prepare("
+                SELECT bv.*, b.event_time, b.venue_name, 
+                       u.full_name as customer_name, u.phone as customer_phone
+                FROM booking_vendors bv
+                JOIN bookings b ON bv.booking_id = b.id
+                JOIN users u ON b.customer_id = u.id
+                WHERE bv.vendor_id = ? AND DATE(b.event_date) = ? AND bv.status = 'confirmed'
+                ORDER BY b.event_time ASC
+            ");
+            $stmt->execute([$vendor_id, $date]);
+            $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (empty($events)) {
+                echo "<p class='text-muted text-center py-3'>No events scheduled for this day.</p>";
+            } else {
+                foreach ($events as $event) {
+                    echo "<div class='border-bottom pb-3 mb-3'>";
+                    echo "<h6>" . htmlspecialchars($event['customer_name']) . "</h6>";
+                    echo "<p class='mb-1'><i class='fas fa-clock'></i> " . date('g:i A', strtotime($event['event_time'])) . "</p>";
+                    if ($event['venue_name']) {
+                        echo "<p class='mb-1'><i class='fas fa-map-marker-alt'></i> " . htmlspecialchars($event['venue_name']) . "</p>";
+                    }
+                    if ($event['customer_phone']) {
+                        echo "<p class='mb-1'><i class='fas fa-phone'></i> " . htmlspecialchars($event['customer_phone']) . "</p>";
+                    }
+                    if ($event['agreed_price']) {
+                        echo "<p class='mb-0 text-success'><strong>RM " . number_format($event['agreed_price'], 2) . "</strong></p>";
+                    }
+                    echo "</div>";
+                }
+            }
+            break;
+
+        case 'upload_portfolio_images':
+            if ($_SESSION['user_role'] !== 'vendor') {
+                throw new Exception('Unauthorized');
+            }
+            
+            $vendor_id = (int)$_POST['vendor_id'];
+            
+            // Verify vendor ownership
+            $stmt = $pdo->prepare("SELECT user_id FROM vendors WHERE id = ?");
+            $stmt->execute([$vendor_id]);
+            $vendor_data = $stmt->fetch();
+            
+            if (!$vendor_data || $vendor_data['user_id'] != $_SESSION['user_id']) {
+                throw new Exception('Unauthorized');
+            }
+            
+            if (empty($_FILES['images'])) {
+                throw new Exception('No images uploaded');
+            }
+            
+            $upload_dir = '../uploads/portfolio/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
+            }
+            
+            $uploaded_images = [];
+            $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            
+            foreach ($_FILES['images']['tmp_name'] as $key => $tmp_name) {
+                if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
+                    $file_type = $_FILES['images']['type'][$key];
+                    
+                    if (!in_array($file_type, $allowed_types)) {
+                        continue;
+                    }
+                    
+                    $file_extension = pathinfo($_FILES['images']['name'][$key], PATHINFO_EXTENSION);
+                    $filename = $vendor_id . '_' . time() . '_' . $key . '.' . $file_extension;
+                    $upload_path = $upload_dir . $filename;
+                    
+                    if (move_uploaded_file($tmp_name, $upload_path)) {
+                        $uploaded_images[] = 'uploads/portfolio/' . $filename;
+                    }
+                }
+            }
+            
+            if (!empty($uploaded_images)) {
+                // Get current portfolio images
+                $stmt = $pdo->prepare("SELECT portfolio_images FROM vendors WHERE id = ?");
+                $stmt->execute([$vendor_id]);
+                $current_data = $stmt->fetch();
+                
+                $current_images = json_decode($current_data['portfolio_images'] ?: '[]', true);
+                $updated_images = array_merge($current_images, $uploaded_images);
+                
+                // Update database
+                $stmt = $pdo->prepare("UPDATE vendors SET portfolio_images = ? WHERE id = ?");
+                $stmt->execute([json_encode($updated_images), $vendor_id]);
+                
+                echo json_encode(['success' => true, 'message' => count($uploaded_images) . ' images uploaded successfully']);
+            } else {
+                throw new Exception('No valid images were uploaded');
+            }
+            break;
+
+        case 'remove_portfolio_image':
+            if ($_SESSION['user_role'] !== 'vendor') {
+                throw new Exception('Unauthorized');
+            }
+            
+            $vendor_id = (int)$_POST['vendor_id'];
+            $image_index = (int)$_POST['image_index'];
+            
+            // Verify vendor ownership
+            $stmt = $pdo->prepare("SELECT user_id, portfolio_images FROM vendors WHERE id = ?");
+            $stmt->execute([$vendor_id]);
+            $vendor_data = $stmt->fetch();
+            
+            if (!$vendor_data || $vendor_data['user_id'] != $_SESSION['user_id']) {
+                throw new Exception('Unauthorized');
+            }
+            
+            $current_images = json_decode($vendor_data['portfolio_images'] ?: '[]', true);
+            
+            if (isset($current_images[$image_index])) {
+                $image_path = '../' . $current_images[$image_index];
+                
+                // Remove from array
+                unset($current_images[$image_index]);
+                $updated_images = array_values($current_images); // Re-index array
+                
+                // Update database
+                $stmt = $pdo->prepare("UPDATE vendors SET portfolio_images = ? WHERE id = ?");
+                $stmt->execute([json_encode($updated_images), $vendor_id]);
+                
+                // Delete file if it exists
+                if (file_exists($image_path)) {
+                    unlink($image_path);
+                }
+                
+                echo json_encode(['success' => true, 'message' => 'Image removed successfully']);
+            } else {
+                throw new Exception('Image not found');
+            }
+            break;
+
+        case 'deactivate_vendor_account':
+            if ($_SESSION['user_role'] !== 'vendor') {
+                throw new Exception('Unauthorized');
+            }
+            
+            $vendor_id = (int)$_POST['vendor_id'];
+            
+            // Verify vendor ownership
+            $stmt = $pdo->prepare("SELECT user_id FROM vendors WHERE id = ?");
+            $stmt->execute([$vendor_id]);
+            $vendor_data = $stmt->fetch();
+            
+            if (!$vendor_data || $vendor_data['user_id'] != $_SESSION['user_id']) {
+                throw new Exception('Unauthorized');
+            }
+            
+            // Update vendor status to inactive
+            $stmt = $pdo->prepare("UPDATE vendors SET status = 'inactive' WHERE id = ?");
+            $stmt->execute([$vendor_id]);
+            
+            echo json_encode(['success' => true, 'message' => 'Account deactivated successfully']);
+            break;
             
         default:
             throw new Exception('Invalid action');

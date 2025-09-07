@@ -1,0 +1,91 @@
+:root {
+  /* Primary: Soft pink */
+  --primary: #ff85a2; /* Bright pink for buttons, navs */
+  --primary-hover: #e67590; /* Darker pink for hover */
+  --primary-focus: #e67590; /* Focus state */
+  --primary-light: #ffb3c6; /* Lighter pink for backgrounds */
+
+  /* Secondary: Pastel lavender */
+  --secondary: #e6e6fa; /* Soft lavender for secondary elements */
+  --secondary-hover: #d4d4f6; /* Darker lavender for hover */
+  --secondary-light: #f5f5ff; /* Near-white lavender */
+
+  /* Accent: Pastel purple */
+  --accent: #c71585; /* Vibrant purple for icons, borders */
+  --accent-hover: #a0126e; /* Darker purple for hover */
+
+  /* Text and Backgrounds */
+  --gray-dark: #4a2e4a; /* Deep plum for text */
+  --gray: #7a547a; /* Lighter plum for secondary text */
+  --text-light: #ffffff; /* White for dark backgrounds */
+  --body-bg: #fff0f5; /* Light pink background */
+  --content-bg: #ffffff; /* White for cards */
+  --sidebar-light-bg: #e6e6fa; /* Lavender for sidebar */
+  --sidebar-dark-bg: #4b3b6b; /* Dark purple sidebar */
+  --border-color: #e0b8d0; /* Soft pink border */
+
+  /* Contextual colors (adjusted for girly theme) */
+  --success: #20b2aa; /* Teal for success */
+  --success-hover: #1a8c87;
+  --warning: #ffb6c1; /* Light pink for warnings */
+  --warning-hover: #e0a1ab;
+  --danger: #ff4040; /* Bright red for errors */
+  --danger-hover: #e03333;
+  --info: #87ceeb; /* Sky blue for info */
+  --info-hover: #6cb2d5;
+
+  /* Girly-specific accents */
+  --girly-pink: #ff69b4; /* Hot pink for highlights */
+  --girly-purple: #dda0dd; /* Soft purple for accents */
+  --girly-glow: #ff99cc; /* Pink glow for effects */
+}
+
+/* AdminLTE overrides */
+.navbar-light {
+  background-color: var(--secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.main-sidebar.sidebar-light-primary {
+  background-color: var(--sidebar-light-bg);
+}
+
+.main-sidebar.sidebar-dark-primary {
+  background-color: var(--sidebar-dark-bg);
+}
+
+.card {
+  background-color: var(--content-bg);
+  border: 1px solid var(--border-color);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--secondary);
+  border-color: var(--border-color);
+  color: var(--gray-dark);
+}
+.btn-secondary:hover {
+  background-color: var(--secondary-hover);
+  border-color: var(--border-color);
+}
+
+.alert-success { background-color: var(--success); border-color: var(--success); color: var(--text-light); }
+.alert-warning { background-color: var(--warning); border-color: var(--warning); color: var(--gray-dark); }
+.alert-danger { background-color: var(--danger); border-color: var(--danger); color: var(--text-light); }
+.alert-info { background-color: var(--info); border-color: var(--info); color: var(--gray-dark); }
+
+.nav-sidebar .nav-link { color: var(--gray-dark); }
+.nav-sidebar .nav-link:hover { background-color: var(--primary-light); color: var(--gray-dark); }
+
+.girly-highlight { color: var(--girly-pink); }
+.girly-accent { background-color: var(--girly-purple); color: var(--gray-dark); }
+.girly-glow { border-color: var(--girly-glow); box-shadow: 0 0 5px var(--girly-glow); }

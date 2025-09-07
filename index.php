@@ -90,6 +90,33 @@ try {
                 <a href="register.php" class="btn" style="margin-right: 1rem;">Start Planning</a>
                 <a href="#packages" class="btn btn-secondary">View Packages</a>
             </div>
+            
+            <!-- Quick Demo Access -->
+            <div class="demo-section" style="margin-top: 3rem; padding: 2rem; background: rgba(255,255,255,0.95); border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1);">
+                <h3 style="text-align: center; margin-bottom: 1.5rem; color: var(--primary-color);">
+                    <i class="fas fa-rocket"></i> Try Our Demo
+                </h3>
+                <p style="text-align: center; margin-bottom: 2rem; color: #666;">
+                    Experience our wedding management system instantly with pre-configured demo accounts
+                </p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; max-width: 600px; margin: 0 auto;">
+                    <a href="login.php?demo=admin" class="btn" style="background: linear-gradient(45deg, #dc3545, #c82333); text-decoration: none; color: white; padding: 1rem; text-align: center; border-radius: 8px; transition: all 0.3s ease;">
+                        <i class="fas fa-crown"></i><br>
+                        <strong>Admin Demo</strong><br>
+                        <small>System Management</small>
+                    </a>
+                    <a href="login.php?demo=vendor" class="btn" style="background: linear-gradient(45deg, #28a745, #218838); text-decoration: none; color: white; padding: 1rem; text-align: center; border-radius: 8px; transition: all 0.3s ease;">
+                        <i class="fas fa-camera"></i><br>
+                        <strong>Vendor Demo</strong><br>
+                        <small>Service Provider</small>
+                    </a>
+                    <a href="login.php?demo=customer" class="btn" style="background: linear-gradient(45deg, #007bff, #0056b3); text-decoration: none; color: white; padding: 1rem; text-align: center; border-radius: 8px; transition: all 0.3s ease;">
+                        <i class="fas fa-heart"></i><br>
+                        <strong>Customer Demo</strong><br>
+                        <small>Wedding Planning</small>
+                    </a>
+                </div>
+            </div>
         </div>
     </section>
 

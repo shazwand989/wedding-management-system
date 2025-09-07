@@ -1,0 +1,142 @@
+:root {
+  /* Primary color: Deep blue inspired by a clear night sky */
+  --primary: #005b96; /* Rich blue for primary buttons, navs, and highlights */
+  --primary-hover: #004876; /* Darker blue for hover states */
+  --primary-focus: #004876; /* Consistent focus state */
+  --primary-light: #6699cc; /* Lighter blue for subtle backgrounds */
+
+  /* Secondary color: Soft gray-blue for backgrounds */
+  --secondary: #e6ecef; /* Light gray-blue for secondary elements */
+  --secondary-hover: #d6dce0; /* Slightly darker for hover */
+  --secondary-light: #f5f8fa; /* Near-white for subtle contrasts */
+
+  /* Accent color: Vibrant cyan for accents */
+  --accent: #00b7eb; /* Bright cyan for icons, borders, or highlights */
+  --accent-hover: #0099c7; /* Darker cyan for hover states */
+
+  /* Text colors */
+  --gray-dark: #2c3e50; /* Dark navy for main text */
+  --gray: #6c8294; /* Lighter gray-blue for secondary text */
+  --text-light: #f5f5f5; /* Light text for dark backgrounds */
+
+  /* Backgrounds */
+  --body-bg: #f5f8fa; /* Light blue-gray background */
+  --content-bg: #ffffff; /* White for cards and main content areas */
+  --sidebar-light-bg: #e6ecef; /* Secondary color for light sidebar */
+  --sidebar-dark-bg: #1e2a44; /* Dark navy for dark sidebar */
+
+  /* Border color */
+  --border-color: #c9d1d9; /* Subtle blue-gray border */
+
+  /* Contextual colors */
+  --success: #28a745; /* Green for success states */
+  --success-hover: #218838; /* Darker green for hover */
+  --warning: #ffc107; /* Amber for warnings */
+  --warning-hover: #e0a800; /* Darker amber for hover */
+  --danger: #dc3545; /* Red for errors */
+  --danger-hover: #c82333; /* Darker red for hover */
+  --info: #17a2b8; /* Cyan for info states */
+  --info-hover: #138496; /* Darker cyan for hover */
+
+  /* Blue theme-specific accents */
+  --ocean-blue: #0077b6; /* Deep ocean blue for thematic elements */
+  --sky-blue: #90e0ef; /* Light sky blue for highlights */
+  --midnight-blue: #03045e; /* Dark midnight blue for contrast */
+}
+
+/* AdminLTE component overrides */
+.navbar-light {
+  background-color: var(--secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.main-sidebar.sidebar-light-primary {
+  background-color: var(--sidebar-light-bg);
+}
+
+.main-sidebar.sidebar-dark-primary {
+  background-color: var(--sidebar-dark-bg);
+}
+
+.card {
+  background-color: var(--content-bg);
+  border: 1px solid var(--border-color);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+.btn-primary:focus {
+  background-color: var(--primary-focus);
+  border-color: var(--primary-focus);
+  box-shadow: 0 0 0 3px rgba(0, 91, 150, 0.3);
+}
+
+.btn-secondary {
+  background-color: var(--secondary);
+  border-color: var(--border-color);
+  color: var(--gray-dark);
+}
+.btn-secondary:hover {
+  background-color: var(--secondary-hover);
+  border-color: var(--border-color);
+}
+
+.alert-success {
+  background-color: var(--success);
+  border-color: var(--success);
+  color: var(--text-light);
+}
+.alert-warning {
+  background-color: var(--warning);
+  border-color: var(--warning);
+  color: var(--gray-dark);
+}
+.alert-danger {
+  background-color: var(--danger);
+  border-color: var(--danger);
+  color: var(--text-light);
+}
+.alert-info {
+  background-color: var(--info);
+  border-color: var(--info);
+  color: var(--text-light);
+}
+
+/* Sidebar menu items */
+.nav-sidebar .nav-link {
+  color: var(--gray-dark);
+}
+.nav-sidebar .nav-link:hover {
+  background-color: var(--primary-light);
+  color: var(--gray-dark);
+}
+.main-sidebar.sidebar-dark-primary .nav-link {
+  color: var(--text-light);
+}
+.main-sidebar.sidebar-dark-primary .nav-link:hover {
+  background-color: var(--primary-light);
+  color: var(--gray-dark);
+}
+
+/* Blue theme-specific classes */
+.ocean-accent {
+  color: var(--ocean-blue);
+}
+.sky-highlight {
+  background-color: var(--sky-blue);
+  color: var(--gray-dark);
+}
+.midnight-contrast {
+  background-color: var(--midnight-blue);
+  color: var(--text-light);
+  transition: box-shadow 0.3s ease;
+}
+.midnight-contrast:hover {
+  box-shadow: 0 0 10px var(--ocean-blue);
+}

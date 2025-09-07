@@ -1,519 +1,498 @@
-// Wedding Management System - Main JavaScript
+/**
+ * Wedding Management System - Main JavaScript File
+ * Contains common functions and utilities for all user roles
+ */
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all components
-    initializeModals();
-    initializeFormValidation();
-    initializeNotifications();
-    initializeDatePickers();
-    initializeAjaxForms();
-    initializeSidebar();
-    initializeNavbar();
-});
-
-// Modal functionality
-function initializeModals() {
-    const modals = document.querySelectorAll('.modal');
-    const openButtons = document.querySelectorAll('[data-modal]');
-    const closeButtons = document.querySelectorAll('.close, .modal-close');
-
-    openButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const modalId = this.getAttribute('data-modal');
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.style.display = 'block';
-                document.body.style.overflow = 'hidden';
-            }
-        });
-    });
-
-    closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const modal = this.closest('.modal');
-            if (modal) {
-                modal.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }
-        });
-    });
-
-    // Close modal when clicking outside
-    modals.forEach(modal => {
-        modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }
-        });
-    });
-}
-
-// Form validation
-function initializeFormValidation() {
-    const forms = document.querySelectorAll('.validate-form');
+$(document).ready(function() {
+    // Initialize common components
+    initializeComponents();
     
-    forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            if (!validateForm(this)) {
-                e.preventDefault();
-            }
-        });
-
-        // Real-time validation
-        const inputs = form.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            input.addEventListener('blur', function() {
-                validateField(this);
-            });
-        });
-    });
-}
-
-function validateForm(form) {
-    let isValid = true;
-    const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
-    
-    inputs.forEach(input => {
-        if (!validateField(input)) {
-            isValid = false;
-        }
-    });
-    
-    return isValid;
-}
-
-function validateField(field) {
-    const value = field.value.trim();
-    let isValid = true;
-    let errorMessage = '';
-
-    // Remove existing error styling
-    field.classList.remove('error');
-    const existingError = field.parentNode.querySelector('.error-message');
-    if (existingError) {
-        existingError.remove();
-    }
-
-    // Required field validation
-    if (field.hasAttribute('required') && value === '') {
-        isValid = false;
-        errorMessage = 'This field is required';
-    }
-
-    // Email validation
-    if (field.type === 'email' && value !== '') {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) {
-            isValid = false;
-            errorMessage = 'Please enter a valid email address';
-        }
-    }
-
-    // Phone validation
-    if (field.type === 'tel' && value !== '') {
-        const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-        if (!phoneRegex.test(value) || value.length < 10) {
-            isValid = false;
-            errorMessage = 'Please enter a valid phone number';
-        }
-    }
-
-    // Password validation
-    if (field.type === 'password' && value !== '') {
-        if (value.length < 6) {
-            isValid = false;
-            errorMessage = 'Password must be at least 6 characters long';
-        }
-    }
-
-    // Confirm password validation
-    if (field.name === 'confirm_password') {
-        const passwordField = field.form.querySelector('input[name="password"]');
-        if (passwordField && value !== passwordField.value) {
-            isValid = false;
-            errorMessage = 'Passwords do not match';
-        }
-    }
-
-    // Date validation (future dates for events)
-    if (field.type === 'date' && field.name === 'event_date' && value !== '') {
-        const selectedDate = new Date(value);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        if (selectedDate < today) {
-            isValid = false;
-            errorMessage = 'Event date must be in the future';
-        }
-    }
-
-    // Show error if validation failed
-    if (!isValid) {
-        field.classList.add('error');
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.textContent = errorMessage;
-        field.parentNode.appendChild(errorDiv);
-    }
-
-    return isValid;
-}
-
-// Notifications
-function initializeNotifications() {
-    // Auto-dismiss alerts after 5 seconds
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        setTimeout(() => {
-            alert.style.transition = 'opacity 0.5s';
-            alert.style.opacity = '0';
-            setTimeout(() => {
-                if (alert.parentNode) {
-                    alert.parentNode.removeChild(alert);
-                }
-            }, 500);
-        }, 5000);
-    });
-}
-
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type} fade-in`;
-    notification.innerHTML = `
-        <span>${message}</span>
-        <button type="button" class="close" onclick="this.parentElement.remove()">&times;</button>
-    `;
-    
-    const container = document.querySelector('.container') || document.body;
-    container.insertBefore(notification, container.firstChild);
-    
-    // Auto-dismiss after 5 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.style.transition = 'opacity 0.5s';
-            notification.style.opacity = '0';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 500);
-        }
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
     }, 5000);
-}
-
-// Date picker initialization
-function initializeDatePickers() {
-    const dateInputs = document.querySelectorAll('input[type="date"]');
-    const today = new Date().toISOString().split('T')[0];
     
-    dateInputs.forEach(input => {
-        if (input.name === 'event_date' || input.classList.contains('future-date')) {
-            input.min = today;
-        }
-    });
-}
-
-// AJAX form handling
-function initializeAjaxForms() {
-    const ajaxForms = document.querySelectorAll('.ajax-form');
-    
-    ajaxForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            handleAjaxForm(this);
-        });
-    });
-}
-
-function handleAjaxForm(form) {
-    const formData = new FormData(form);
-    const submitButton = form.querySelector('button[type="submit"]');
-    const originalText = submitButton.textContent;
-    
-    // Show loading state
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<span class="spinner"></span> Processing...';
-    
-    fetch(form.action, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            if (data.redirect) {
-                setTimeout(() => {
-                    window.location.href = data.redirect;
-                }, 1500);
-            } else if (data.reload) {
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            }
-        } else {
-            showNotification(data.message, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred. Please try again.', 'danger');
-    })
-    .finally(() => {
-        // Restore button state
-        submitButton.disabled = false;
-        submitButton.textContent = originalText;
-    });
-}
-
-// Sidebar functionality
-function initializeSidebar() {
-    const menuToggle = document.querySelector('.menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-    
-    if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('show');
-        });
-    }
-}
-
-// Navbar mobile toggle - Bootstrap 5 native
-function initializeNavbar() {
-    // Bootstrap 5 handles the collapse functionality automatically
-    // We just need to add some custom behavior for anchor links
-    const navbarCollapse = document.querySelector('.navbar-collapse');
-    
-    if (navbarCollapse) {
-        // Close menu when anchor links are clicked
-        const navLinks = navbarCollapse.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                // Only auto-close if it's an anchor link (starts with #)
-                if (link.getAttribute('href')?.startsWith('#')) {
-                    // Use Bootstrap's collapse instance to hide the menu
-                    const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
-                    if (bsCollapse) {
-                        bsCollapse.hide();
-                    }
-                }
-            });
-        });
-    }
-}
-
-// Status update functionality
-function updateStatus(type, id, status) {
-    const formData = new FormData();
-    formData.append('type', type);
-    formData.append('id', id);
-    formData.append('status', status);
-    
-    fetch('includes/update_status.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            // Update the status badge in the UI
-            const statusBadge = document.querySelector(`[data-status-id="${id}"]`);
-            if (statusBadge) {
-                statusBadge.className = `badge badge-${getStatusClass(status)}`;
-                statusBadge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-            }
-        } else {
-            showNotification(data.message, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred while updating status.', 'danger');
-    });
-}
-
-function getStatusClass(status) {
-    const statusClasses = {
-        'pending': 'warning',
-        'confirmed': 'success',
-        'cancelled': 'danger',
-        'completed': 'info',
-        'active': 'success',
-        'inactive': 'secondary',
-        'paid': 'success',
-        'partial': 'warning',
-        'refunded': 'danger'
-    };
-    return statusClasses[status] || 'secondary';
-}
-
-// Search functionality
-function initializeSearch() {
-    const searchInputs = document.querySelectorAll('.search-input');
-    
-    searchInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const targetTable = document.querySelector(this.getAttribute('data-target'));
-            
-            if (targetTable) {
-                const rows = targetTable.querySelectorAll('tbody tr');
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchTerm) ? '' : 'none';
-                });
-            }
-        });
-    });
-}
-
-// Calendar functionality for booking dates
-function initializeCalendar() {
-    const calendarContainer = document.querySelector('#calendar');
-    if (!calendarContainer) return;
-    
-    // Simple calendar implementation
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    
-    generateCalendar(currentMonth, currentYear);
-}
-
-function generateCalendar(month, year) {
-    const calendarContainer = document.querySelector('#calendar');
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDay = new Date(year, month, 1).getDay();
-    
-    let calendarHTML = `
-        <div class="calendar-header">
-            <h3>${getMonthName(month)} ${year}</h3>
-        </div>
-        <div class="calendar-grid">
-            <div class="calendar-day-header">Sun</div>
-            <div class="calendar-day-header">Mon</div>
-            <div class="calendar-day-header">Tue</div>
-            <div class="calendar-day-header">Wed</div>
-            <div class="calendar-day-header">Thu</div>
-            <div class="calendar-day-header">Fri</div>
-            <div class="calendar-day-header">Sat</div>
-    `;
-    
-    // Empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-        calendarHTML += '<div class="calendar-day empty"></div>';
+    // Initialize tooltips if Bootstrap is available
+    if (typeof $().tooltip === 'function') {
+        $('[data-toggle="tooltip"]').tooltip();
     }
     
-    // Days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month, day);
-        const isToday = date.toDateString() === new Date().toDateString();
-        const classes = `calendar-day ${isToday ? 'today' : ''}`;
+    // Initialize popovers if Bootstrap is available
+    if (typeof $().popover === 'function') {
+        $('[data-toggle="popover"]').popover();
+    }
+    
+    // Smooth scrolling for anchor links
+    $('a[href^="#"]').on('click', function(e) {
+        e.preventDefault();
+        const target = $(this.getAttribute('href'));
+        if (target.length) {
+            $('html, body').stop().animate({
+                scrollTop: target.offset().top - 70
+            }, 1000);
+        }
+    });
+    
+    // Form validation enhancement
+    $('form').on('submit', function(e) {
+        const form = $(this);
+        const requiredFields = form.find('[required]');
+        let isValid = true;
         
-        calendarHTML += `<div class="${classes}" data-date="${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}">${day}</div>`;
-    }
-    
-    calendarHTML += '</div>';
-    calendarContainer.innerHTML = calendarHTML;
-    
-    // Add click events to calendar days
-    const calendarDays = calendarContainer.querySelectorAll('.calendar-day:not(.empty)');
-    calendarDays.forEach(day => {
-        day.addEventListener('click', function() {
-            const selectedDate = this.getAttribute('data-date');
-            const dateInput = document.querySelector('input[name="event_date"]');
-            if (dateInput) {
-                dateInput.value = selectedDate;
-            }
-            
-            // Visual feedback
-            calendarDays.forEach(d => d.classList.remove('selected'));
-            this.classList.add('selected');
-        });
-    });
-}
-
-function getMonthName(month) {
-    const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return months[month];
-}
-
-// File upload preview
-function initializeFileUpload() {
-    const fileInputs = document.querySelectorAll('input[type="file"]');
-    
-    fileInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            const files = this.files;
-            const preview = this.parentNode.querySelector('.file-preview');
-            
-            if (preview && files.length > 0) {
-                preview.innerHTML = '';
-                
-                Array.from(files).forEach(file => {
-                    if (file.type.startsWith('image/')) {
-                        const img = document.createElement('img');
-                        img.src = URL.createObjectURL(file);
-                        img.style.maxWidth = '100px';
-                        img.style.maxHeight = '100px';
-                        img.style.margin = '5px';
-                        preview.appendChild(img);
-                    } else {
-                        const fileInfo = document.createElement('div');
-                        fileInfo.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-                        preview.appendChild(fileInfo);
-                    }
-                });
+        requiredFields.each(function() {
+            const field = $(this);
+            if (!field.val().trim()) {
+                field.addClass('is-invalid');
+                isValid = false;
+            } else {
+                field.removeClass('is-invalid').addClass('is-valid');
             }
         });
+        
+        if (!isValid) {
+            e.preventDefault();
+            showAlert('Please fill in all required fields.', 'error');
+        }
     });
-}
-
-// Initialize all components when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    initializeSearch();
-    initializeCalendar();
-    initializeFileUpload();
+    
+    // Real-time field validation
+    $('[required]').on('blur', function() {
+        const field = $(this);
+        if (!field.val().trim()) {
+            field.addClass('is-invalid');
+        } else {
+            field.removeClass('is-invalid').addClass('is-valid');
+        }
+    });
+    
+    // Email validation
+    $('input[type="email"]').on('blur', function() {
+        const email = $(this).val();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        if (email && !emailRegex.test(email)) {
+            $(this).addClass('is-invalid');
+            showFieldError($(this), 'Please enter a valid email address');
+        } else if (email) {
+            $(this).removeClass('is-invalid').addClass('is-valid');
+            hideFieldError($(this));
+        }
+    });
+    
+    // Phone validation
+    $('input[type="tel"]').on('blur', function() {
+        const phone = $(this).val();
+        const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
+        
+        if (phone && !phoneRegex.test(phone)) {
+            $(this).addClass('is-invalid');
+            showFieldError($(this), 'Please enter a valid phone number');
+        } else if (phone) {
+            $(this).removeClass('is-invalid').addClass('is-valid');
+            hideFieldError($(this));
+        }
+    });
 });
 
-// Utility functions
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('ms-MY', {
-        style: 'currency',
-        currency: 'MYR'
-    }).format(amount);
+function initializeComponents() {
+    // Initialize DataTables
+    if ($.fn.DataTable && $('.data-table').length) {
+        $('.data-table').DataTable({
+            responsive: true,
+            lengthChange: true,
+            autoWidth: false,
+            pageLength: 25,
+            order: [[0, 'desc']], // Default sort by first column descending
+            language: {
+                search: "Search:",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "Showing 0 to 0 of 0 entries",
+                infoFiltered: "(filtered from _TOTAL_ total entries)",
+                zeroRecords: "No matching records found",
+                emptyTable: "No data available in table",
+                paginate: {
+                    first: "First",
+                    last: "Last",
+                    next: "Next",
+                    previous: "Previous"
+                }
+            },
+            columnDefs: [
+                { orderable: false, targets: 'no-sort' }
+            ]
+        });
+    }
+    
+    // Initialize Select2 if available
+    if ($.fn.select2 && $('.select2').length) {
+        $('.select2').select2({
+            theme: 'bootstrap4',
+            width: '100%'
+        });
+    }
+    
+    // Initialize date pickers if available
+    if ($.fn.datepicker && $('.datepicker').length) {
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true
+        });
+    }
+    
+    // Initialize time pickers if available
+    if ($.fn.timepicker && $('.timepicker').length) {
+        $('.timepicker').timepicker({
+            format: 'HH:MM',
+            autoclose: true
+        });
+    }
 }
 
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-MY', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+// Utility Functions
+function showAlert(message, type = 'info', duration = 5000) {
+    const alertClass = type === 'error' ? 'danger' : type;
+    const alertHtml = `
+        <div class="alert alert-${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    `;
+    
+    // Remove existing alerts
+    $('.alert').remove();
+    
+    // Add new alert to the top of the content
+    $('.content-wrapper .content').prepend(alertHtml);
+    
+    // Auto-hide after duration
+    if (duration > 0) {
+        setTimeout(function() {
+            $('.alert').fadeOut('slow');
+        }, duration);
+    }
+}
+
+function showFieldError(field, message) {
+    hideFieldError(field);
+    field.after(`<div class="invalid-feedback d-block">${message}</div>`);
+}
+
+function hideFieldError(field) {
+    field.next('.invalid-feedback').remove();
+}
+
+function confirmAction(message, callback, title = 'Are you sure?') {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: title,
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, proceed',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                callback();
+            }
+        });
+    } else {
+        if (confirm(message)) {
+            callback();
+        }
+    }
+}
+
+function formatCurrency(amount, currency = 'RM') {
+    return currency + ' ' + parseFloat(amount).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
     });
+}
+
+function formatDate(dateString, format = 'long') {
+    const date = new Date(dateString);
+    
+    if (format === 'short') {
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    } else if (format === 'long') {
+        return date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    } else {
+        return date.toLocaleDateString();
+    }
 }
 
 function formatTime(timeString) {
-    const time = new Date(`2000-01-01 ${timeString}`);
-    return time.toLocaleTimeString('en-MY', {
-        hour: '2-digit',
-        minute: '2-digit'
+    const time = new Date('2000-01-01 ' + timeString);
+    return time.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
     });
 }
 
-// Export functions for global use
-window.WeddingManagement = {
-    showNotification,
-    updateStatus,
-    formatCurrency,
-    formatDate,
-    formatTime,
-    validateForm,
-    handleAjaxForm
-};
+function timeAgo(timestamp) {
+    const now = new Date();
+    const date = new Date(timestamp);
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) return 'just now';
+    if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + ' minutes ago';
+    if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + ' hours ago';
+    if (diffInSeconds < 2592000) return Math.floor(diffInSeconds / 86400) + ' days ago';
+    
+    return date.toLocaleDateString();
+}
+
+function loadingState(element, isLoading = true) {
+    if (isLoading) {
+        element.data('original-text', element.html());
+        element.html('<i class="fas fa-spinner fa-spin"></i> Loading...').prop('disabled', true);
+    } else {
+        element.html(element.data('original-text')).prop('disabled', false);
+    }
+}
+
+function copyToClipboard(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            showAlert('Copied to clipboard!', 'success', 2000);
+        });
+    } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showAlert('Copied to clipboard!', 'success', 2000);
+    }
+}
+
+// AJAX helper function
+function makeAjaxRequest(url, data, callback, method = 'POST') {
+    $.ajax({
+        url: url,
+        type: method,
+        data: data,
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                callback(response);
+            } else {
+                showAlert(response.message || 'An error occurred', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            showAlert('Network error: ' + error, 'error');
+        }
+    });
+}
+
+// File upload helper
+function initializeFileUpload(selector, options = {}) {
+    const defaultOptions = {
+        maxFileSize: 5 * 1024 * 1024, // 5MB
+        allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'],
+        multiple: false
+    };
+    
+    const settings = Object.assign(defaultOptions, options);
+    
+    $(selector).on('change', function(e) {
+        const files = e.target.files;
+        const validFiles = [];
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            
+            // Check file size
+            if (file.size > settings.maxFileSize) {
+                showAlert(`File "${file.name}" is too large. Maximum size is ${settings.maxFileSize / (1024 * 1024)}MB.`, 'error');
+                continue;
+            }
+            
+            // Check file type
+            if (!settings.allowedTypes.includes(file.type)) {
+                showAlert(`File "${file.name}" has invalid type. Allowed types: ${settings.allowedTypes.join(', ')}.`, 'error');
+                continue;
+            }
+            
+            validFiles.push(file);
+        }
+        
+        if (validFiles.length !== files.length) {
+            // Reset the input to remove invalid files
+            $(this).val('');
+        }
+        
+        return validFiles.length > 0;
+    });
+}
+
+// Print functionality
+function printElement(selector) {
+    const element = $(selector);
+    if (element.length) {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Print</title>
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+                    <style>
+                        @media print {
+                            .no-print { display: none !important; }
+                            body { font-size: 12px; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${element.html()}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    }
+}
+
+// Export table to CSV
+function exportTableToCSV(tableSelector, filename = 'export.csv') {
+    const table = $(tableSelector);
+    if (!table.length) return;
+    
+    const csv = [];
+    const rows = table.find('tr');
+    
+    rows.each(function() {
+        const row = [];
+        $(this).find('th, td').each(function() {
+            let text = $(this).text().trim();
+            // Escape quotes and wrap in quotes if contains comma
+            if (text.includes(',') || text.includes('"')) {
+                text = '"' + text.replace(/"/g, '""') + '"';
+            }
+            row.push(text);
+        });
+        csv.push(row.join(','));
+    });
+    
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename);
+    } else {
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
+// Global logout function
+function logout() {
+    confirmAction(
+        'Are you sure you want to logout?',
+        function() {
+            window.location.href = '../includes/logout.php';
+        },
+        'Logout Confirmation'
+    );
+}
+
+// Dark mode toggle (if implemented)
+function toggleDarkMode() {
+    $('body').toggleClass('dark-mode');
+    const isDark = $('body').hasClass('dark-mode');
+    localStorage.setItem('darkMode', isDark);
+}
+
+// Initialize dark mode from localStorage
+$(document).ready(function() {
+    if (localStorage.getItem('darkMode') === 'true') {
+        $('body').addClass('dark-mode');
+    }
+});
+
+// Auto-save form data to localStorage
+function enableAutoSave(formSelector, key) {
+    const form = $(formSelector);
+    
+    // Load saved data
+    const savedData = localStorage.getItem(key);
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        Object.keys(data).forEach(name => {
+            form.find(`[name="${name}"]`).val(data[name]);
+        });
+    }
+    
+    // Save data on change
+    form.on('change input', function() {
+        const formData = {};
+        form.find('input, select, textarea').each(function() {
+            if ($(this).attr('name')) {
+                formData[$(this).attr('name')] = $(this).val();
+            }
+        });
+        localStorage.setItem(key, JSON.stringify(formData));
+    });
+    
+    // Clear saved data on successful submit
+    form.on('submit', function() {
+        setTimeout(() => {
+            if (!form.find('.is-invalid').length) {
+                localStorage.removeItem(key);
+            }
+        }, 1000);
+    });
+}
+
+// Initialize notification system
+function initializeNotifications() {
+    // Check for new notifications every 5 minutes
+    setInterval(function() {
+        if (typeof checkForNotifications === 'function') {
+            checkForNotifications();
+        }
+    }, 300000);
+}
+
+// Start notification checking when document is ready
+$(document).ready(function() {
+    initializeNotifications();
+});
+
+// Global error handler
+window.addEventListener('error', function(e) {
+    console.error('Global error:', e.error);
+    // Log error to server if needed
+});
+
+// Global unhandled promise rejection handler
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('Unhandled promise rejection:', e.reason);
+    // Log error to server if needed
+});

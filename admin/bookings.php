@@ -1,17 +1,14 @@
 <?php
-session_start();
+define('ADMIN_ACCESS', true);
 require_once '../includes/config.php';
 
-// Check if user is admin
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
-    header('Location: ../login.php');
-    exit();
+// Check if user is logged in and is admin
+if (!isLoggedIn() || getUserRole() !== 'admin') {
+    redirectTo('../login.php');
 }
 
-// Define access constant for layout
-define('ADMIN_ACCESS', true);
-
 // Page variables
+$page_title = 'Booking Management';
 $page_header = 'Booking Management';
 $page_description = 'Manage all wedding bookings and reservations';
 
@@ -108,398 +105,445 @@ $stats_query = "
     FROM bookings
 ";
 $stats = $pdo->query($stats_query)->fetch(PDO::FETCH_ASSOC);
+
+// Include layout header
+include 'layouts/header.php';
 ?>
 
+<div class="container-fluid">
 
-<?php include 'layouts/header.php'; ?>
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-gradient-warning">
+                <div class="inner">
+                    <h3><?php echo number_format($stats['total_bookings']); ?></h3>
+                    <p>Total Bookings</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <a href="#" class="small-box-footer">
+                    More info <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
 
-<?php include 'layouts/sidebar.php'; ?>
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-gradient-info">
+                <div class="inner">
+                    <h3><?php echo number_format($stats['pending_bookings']); ?></h3>
+                    <p>Pending</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <a href="?status=pending" class="small-box-footer">
+                    More info <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-gradient-success">
+                <div class="inner">
+                    <h3><?php echo number_format($stats['confirmed_bookings']); ?></h3>
+                    <p>Confirmed</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <a href="?status=confirmed" class="small-box-footer">
+                    More info <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-gradient-danger">
+                <div class="inner">
+                    <h3>RM <?php echo number_format($stats['total_revenue'], 0); ?></h3>
+                    <p>Total Revenue</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <a href="#" class="small-box-footer">
+                    More info <i class="fas fa-arrow-circle-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-control" id="status" name="status">
+                        <option value="">All Statuses</option>
+                        <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                        <option value="confirmed" <?php echo $status_filter === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
+                        <option value="completed" <?php echo $status_filter === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                        <option value="cancelled" <?php echo $status_filter === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date" class="form-label">Event Date</label>
+                    <input type="date" class="form-control" id="date" name="date" value="<?php echo htmlspecialchars($date_filter); ?>">
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Customer, venue, or package name...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
                     <div>
-                        <h4><?php echo number_format($stats['total_bookings']); ?></h4>
-                        <p class="mb-0">Total Bookings</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-calendar-check fa-2x"></i>
+                        <button type="submit" class="btn btn-primary btn-block">Filter</button>
                     </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo number_format($stats['pending_bookings']); ?></h4>
-                        <p class="mb-0">Pending</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-clock fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo number_format($stats['confirmed_bookings']); ?></h4>
-                        <p class="mb-0">Confirmed</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-check-circle fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4>RM <?php echo number_format($stats['total_revenue'], 2); ?></h4>
-                        <p class="mb-0">Total Revenue</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-dollar-sign fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Filters -->
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-3">
-                <label for="status" class="form-label">Status</label>
-                <select class="form-select" id="status" name="status">
-                    <option value="">All Statuses</option>
-                    <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                    <option value="confirmed" <?php echo $status_filter === 'confirmed' ? 'selected' : ''; ?>>Confirmed</option>
-                    <option value="completed" <?php echo $status_filter === 'completed' ? 'selected' : ''; ?>>Completed</option>
-                    <option value="cancelled" <?php echo $status_filter === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
-                </select>
+    <!-- Bookings Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">All Bookings</h5>
+            <div>
+                <button class="btn btn-success btn-sm" onclick="exportBookings()">
+                    <i class="fas fa-download"></i> Export
+                </button>
             </div>
-            <div class="col-md-3">
-                <label for="date" class="form-label">Event Date</label>
-                <input type="date" class="form-control" id="date" name="date" value="<?php echo htmlspecialchars($date_filter); ?>">
-            </div>
-            <div class="col-md-4">
-                <label for="search" class="form-label">Search</label>
-                <input type="text" class="form-control" id="search" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Customer, venue, or package name...">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">&nbsp;</label>
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">Filter</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Bookings Table -->
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">All Bookings</h5>
-        <div>
-            <button class="btn btn-success btn-sm" onclick="exportBookings()">
-                <i class="fas fa-download"></i> Export
-            </button>
         </div>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Customer</th>
-                        <th>Event Date</th>
-                        <th>Venue</th>
-                        <th>Package</th>
-                        <th>Guests</th>
-                        <th>Amount</th>
-                        <th>Payment</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($bookings)): ?>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="bookingsTable" class="table table-striped table-hover">
+                    <thead>
                         <tr>
-                            <td colspan="10" class="text-center">No bookings found</td>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Event Date</th>
+                            <th>Venue</th>
+                            <th>Package</th>
+                            <th>Guests</th>
+                            <th>Amount</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($bookings as $booking): ?>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($bookings)): ?>
                             <tr>
-                                <td>#<?php echo $booking['id']; ?></td>
-                                <td>
-                                    <div>
-                                        <strong><?php echo htmlspecialchars($booking['customer_name']); ?></strong><br>
-                                        <small class="text-muted"><?php echo htmlspecialchars($booking['customer_email']); ?></small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <?php echo date('M j, Y', strtotime($booking['event_date'])); ?><br>
-                                    <small class="text-muted"><?php echo date('g:i A', strtotime($booking['event_time'])); ?></small>
-                                </td>
-                                <td><?php echo htmlspecialchars($booking['venue_name'] ?: 'Not specified'); ?></td>
-                                <td><?php echo htmlspecialchars($booking['package_name'] ?: 'Custom'); ?></td>
-                                <td><?php echo number_format($booking['guest_count']); ?></td>
-                                <td>RM <?php echo number_format($booking['total_amount'], 2); ?></td>
-                                <td>
-                                    <div>
-                                        RM <?php echo number_format($booking['paid_amount'], 2); ?><br>
-                                        <span class="badge bg-<?php echo $booking['payment_status'] === 'paid' ? 'success' : ($booking['payment_status'] === 'partial' ? 'warning' : 'danger'); ?>">
-                                            <?php echo ucfirst($booking['payment_status']); ?>
-                                        </span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge bg-<?php
-                                                            echo $booking['booking_status'] === 'confirmed' ? 'success' : ($booking['booking_status'] === 'pending' ? 'warning' : ($booking['booking_status'] === 'completed' ? 'info' : 'danger'));
-                                                            ?>">
-                                        <?php echo ucfirst($booking['booking_status']); ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewBooking(<?php echo $booking['id']; ?>)">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="#" onclick="updateStatus(<?php echo $booking['id']; ?>, 'pending')">Mark Pending</a></li>
-                                                <li><a class="dropdown-item" href="#" onclick="updateStatus(<?php echo $booking['id']; ?>, 'confirmed')">Mark Confirmed</a></li>
-                                                <li><a class="dropdown-item" href="#" onclick="updateStatus(<?php echo $booking['id']; ?>, 'completed')">Mark Completed</a></li>
-                                                <li><a class="dropdown-item" href="#" onclick="updateStatus(<?php echo $booking['id']; ?>, 'cancelled')">Mark Cancelled</a></li>
-                                            </ul>
-                                        </div>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteBooking(<?php echo $booking['id']; ?>)">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
+                                <td colspan="10" class="text-center">No bookings found</td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
+                        <?php else: ?>
+                            <?php foreach ($bookings as $booking): ?>
+                                <tr>
+                                    <td>#<?php echo $booking['id']; ?></td>
+                                    <td>
+                                        <div>
+                                            <strong><?php echo htmlspecialchars($booking['customer_name']); ?></strong><br>
+                                            <small class="text-muted"><?php echo htmlspecialchars($booking['customer_email']); ?></small>
+                                        </div>
+                                    </td>
+                                    <td data-order="<?php echo strtotime($booking['event_date']); ?>">
+                                        <?php echo date('M j, Y', strtotime($booking['event_date'])); ?><br>
+                                        <small class="text-muted"><?php echo date('g:i A', strtotime($booking['event_time'])); ?></small>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($booking['venue_name'] ?: 'Not specified'); ?></td>
+                                    <td><?php echo htmlspecialchars($booking['package_name'] ?: 'Custom'); ?></td>
+                                    <td><?php echo number_format($booking['guest_count']); ?></td>
+                                    <td data-order="<?php echo $booking['total_amount']; ?>">RM <?php echo number_format($booking['total_amount'], 2); ?></td>
+                                    <td data-order="<?php echo $booking['paid_amount']; ?>">
+                                        <div>
+                                            RM <?php echo number_format($booking['paid_amount'], 2); ?><br>
+                                            <span class="badge badge-<?php echo $booking['payment_status'] === 'paid' ? 'success' : ($booking['payment_status'] === 'partial' ? 'warning' : 'danger'); ?>">
+                                                <?php echo ucfirst($booking['payment_status']); ?>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-<?php
+                                                                    echo $booking['booking_status'] === 'confirmed' ? 'success' : ($booking['booking_status'] === 'pending' ? 'warning' : ($booking['booking_status'] === 'completed' ? 'info' : 'danger'));
+                                                                    ?>">
+                                            <?php echo ucfirst($booking['booking_status']); ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <!-- View button -->
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewBooking(<?php echo $booking['id']; ?>)" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+
+                                            <!-- Status dropdown -->
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Update Status">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="#" onclick="updateStatus(<?php echo $booking['id']; ?>, 'pending')">
+                                                        <i class="fas fa-clock text-warning"></i> Mark Pending</a>
+                                                    <a class="dropdown-item" href="#" onclick="updateStatus(<?php echo $booking['id']; ?>, 'confirmed')">
+                                                        <i class="fas fa-check text-success"></i> Mark Confirmed</a>
+                                                    <a class="dropdown-item" href="#" onclick="updateStatus(<?php echo $booking['id']; ?>, 'completed')">
+                                                        <i class="fas fa-check-circle text-info"></i> Mark Completed</a>
+                                                    <div class="dropdown-divider"></div>
+                                                    <a class="dropdown-item" href="#" onclick="updateStatus(<?php echo $booking['id']; ?>, 'cancelled')">
+                                                        <i class="fas fa-times text-danger"></i> Mark Cancelled</a>
+                                                </div>
+                                            </div>
+
+                                            <!-- Delete button -->
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteBooking(<?php echo $booking['id']; ?>)" title="Delete Booking">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
-
-<!-- Booking Details Modal -->
-<div class="modal fade" id="bookingModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Booking Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="bookingDetails">
-                <!-- Content loaded via AJAX -->
+    <!-- Booking Details Modal -->
+    <div class="modal fade" id="bookingModal" tabindex="-1" role="dialog" aria-labelledby="bookingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bookingModalLabel">Booking Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="bookingDetails">
+                    <!-- Content loaded via AJAX -->
+                    <div class="text-center">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading booking details...</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
+    </section>
 
-<?php include 'layouts/footer.php'; ?>
+    <?php include 'layouts/footer.php'; ?>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all modals
-    const bookingModal = document.getElementById('bookingModal');
-    let bookingModalInstance = null;
-    
-    if (bookingModal) {
-        bookingModalInstance = new bootstrap.Modal(bookingModal);
-    }
-});
-
-function updateStatus(bookingId, status) {
-        Swal.fire({
-            title: 'Update Booking Status?',
-            text: `Are you sure you want to change the booking status to "${status}"?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#007bff',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Yes, update it!',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Show loading state
-                Swal.fire({
-                    title: 'Updating...',
-                    text: 'Please wait while we update the booking status.',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    showConfirmButton: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                fetch('bookings.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `action=update_status&booking_id=${bookingId}&status=${status}`
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire({
-                                title: 'Updated!',
-                                text: 'Booking status has been updated successfully.',
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: data.message || 'An error occurred while updating the booking status.',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
+    <script>
+        function updateStatus(bookingId, status) {
+            Swal.fire({
+                title: 'Update Booking Status?',
+                text: `Are you sure you want to change the booking status to "${status}"?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, update it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Updating...',
+                        text: 'Please wait while we update the booking status.',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'An error occurred while updating the booking status.',
-                            icon: 'error',
-                            confirmButtonText: 'OK'
-                        });
                     });
-            }
-        });
-    }
 
-    function deleteBooking(bookingId) {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: 'You won\'t be able to revert this! This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'Cancel',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Show loading state
-                Swal.fire({
-                    title: 'Deleting...',
-                    text: 'Please wait while we delete the booking.',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    showConfirmButton: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                fetch('bookings.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
+                    $.ajax({
+                        url: 'bookings.php',
+                        type: 'POST',
+                        data: {
+                            action: 'update_status',
+                            booking_id: bookingId,
+                            status: status
                         },
-                        body: `action=delete_booking&booking_id=${bookingId}`
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire({
-                                title: 'Deleted!',
-                                text: 'Booking has been deleted successfully.',
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: data.message || 'An error occurred while deleting the booking.',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
+                        dataType: 'json',
+                        success: function(data) {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Updated!',
+                                    text: 'Booking status has been updated successfully.',
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Error!', data.message || 'An error occurred while updating the booking status.', 'error');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error(error);
+                            Swal.fire('Error!', 'An error occurred while updating the booking status.', 'error');
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'An error occurred while deleting the booking.',
-                            icon: 'error',
-                            confirmButtonText: 'OK'
-                        });
                     });
-            }
-        });
-    }
-
-    function viewBooking(bookingId) {
-        // Load booking details via AJAX
-        fetch(`../includes/ajax_handler.php?action=get_booking_details&id=${bookingId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
                 }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    const bookingDetails = document.getElementById('bookingDetails');
-                    if (bookingDetails) {
-                        bookingDetails.innerHTML = data.html;
-                    }
-                    
-                    const bookingModal = document.getElementById('bookingModal');
-                    if (bookingModal) {
-                        const modalInstance = bootstrap.Modal.getOrCreateInstance(bookingModal);
-                        modalInstance.show();
-                    }
-                } else {
-                    alert('Error loading booking details: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error loading booking details. Please try again.');
             });
-    }
+        }
 
-    function exportBookings() {
-        const params = new URLSearchParams(window.location.search);
-        params.set('export', '1');
-        window.location.href = 'bookings.php?' + params.toString();
-    }
-</script>
+        function deleteBooking(bookingId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You won\'t be able to revert this! This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait while we delete the booking.',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                        url: 'bookings.php',
+                        type: 'POST',
+                        data: {
+                            action: 'delete_booking',
+                            booking_id: bookingId
+                        },
+                        dataType: 'json',
+                        success: function(data) {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Deleted!',
+                                    text: 'Booking has been deleted successfully.',
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire('Error!', data.message || 'An error occurred while deleting the booking.', 'error');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error(error);
+                            Swal.fire('Error!', 'An error occurred while deleting the booking.', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function viewBooking(bookingId) {
+            $.ajax({
+                url: '../includes/ajax_handler.php',
+                type: 'GET',
+                data: {
+                    action: 'get_booking_details',
+                    id: bookingId
+                },
+                dataType: 'json',
+                success: function(data) {
+                    if (data.success) {
+                        $('#bookingDetails').html(data.html);
+                        $('#bookingModal').modal('show');
+                    } else {
+                        Swal.fire('Error!', data.message || 'Unknown error', 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error(error);
+                    Swal.fire('Error!', 'Error loading booking details. Please try again.', 'error');
+                }
+            });
+        }
+
+        function exportBookings() {
+            const params = new URLSearchParams(window.location.search);
+            params.set('export', '1');
+            window.location.href = 'bookings.php?' + params.toString();
+        }
+
+        // Initialize DataTable
+        $(document).ready(function() {
+            $('#bookingsTable').DataTable({
+                "responsive": true,
+                "lengthChange": true,
+                "autoWidth": false,
+                "pageLength": 25,
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                "order": [
+                    [2, "desc"]
+                ], // Sort by event date descending
+                "columnDefs": [{
+                        "targets": [9], // Actions column
+                        "orderable": false,
+                        "searchable": false
+                    },
+                    {
+                        "targets": [0], // ID column
+                        "width": "80px"
+                    },
+                    {
+                        "targets": [6, 7], // Amount and Payment columns
+                        "className": "text-right"
+                    },
+                    {
+                        "targets": [8], // Status column
+                        "className": "text-center"
+                    },
+                    {
+                        "targets": [9], // Actions column
+                        "className": "text-center",
+                        "width": "120px"
+                    }
+                ],
+                "language": {
+                    "search": "Search bookings:",
+                    "lengthMenu": "Show _MENU_ bookings per page",
+                    "info": "Showing _START_ to _END_ of _TOTAL_ bookings",
+                    "infoEmpty": "No bookings available",
+                    "infoFiltered": "(filtered from _MAX_ total bookings)",
+                    "zeroRecords": "No matching bookings found",
+                    "emptyTable": "No bookings available in table",
+                    "paginate": {
+                        "first": "First",
+                        "last": "Last",
+                        "next": "Next",
+                        "previous": "Previous"
+                    }
+                },
+                "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+            });
+
+            // Custom filter integration
+            const table = $('#bookingsTable').DataTable();
+
+            // Clear any existing DataTable search when using custom filters
+            $('form[method="GET"]').on('submit', function() {
+                table.search('').draw();
+            });
+        });
+    </script>

@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if (ob_get_length()) {
         ob_clean();
     }
-    
+
     header('Content-Type: application/json');
 
     try {
@@ -170,746 +170,649 @@ $stats = $pdo->query($stats_query)->fetch(PDO::FETCH_ASSOC);
 
 <?php include 'layouts/header.php'; ?>
 
-<?php include 'layouts/sidebar.php'; ?>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo number_format($stats['total_packages']); ?></h4>
-                        <p class="mb-0">Total Packages</p>
+<div class="container-fluid">
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4><?php echo number_format($stats['total_packages']); ?></h4>
+                            <p class="mb-0">Total Packages</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-gift fa-2x"></i>
+                        </div>
                     </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-gift fa-2x"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4><?php echo number_format($stats['active_packages']); ?></h4>
+                            <p class="mb-0">Active</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>RM <?php echo number_format($stats['avg_price'], 0); ?></h4>
+                            <p class="mb-0">Average Price</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>RM <?php echo number_format($stats['min_price'], 0); ?> - <?php echo number_format($stats['max_price'], 0); ?></h4>
+                            <p class="mb-0">Price Range</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4><?php echo number_format($stats['active_packages']); ?></h4>
-                        <p class="mb-0">Active</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-check-circle fa-2x"></i>
-                    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-2">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-control" id="status" name="status">
+                        <option value="">All Statuses</option>
+                        <option value="active" <?php echo $status_filter === 'active' ? 'selected' : ''; ?>>Active</option>
+                        <option value="inactive" <?php echo $status_filter === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
+                    </select>
                 </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4>RM <?php echo number_format($stats['avg_price'], 0); ?></h4>
-                        <p class="mb-0">Average Price</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-dollar-sign fa-2x"></i>
-                    </div>
+                <div class="col-md-2">
+                    <label for="price2" class="form-label">Price Range</label>
+                    <select class="form-control" id="price2" name="price2">
+                        <option value="">All Prices</option>
+                        <option value="low" <?php echo $price_filter === 'low' ? 'selected' : ''; ?>>Under RM 10,000</option>
+                        <option value="medium" <?php echo $price_filter === 'medium' ? 'selected' : ''; ?>>RM 10,000 - 20,000</option>
+                        <option value="high" <?php echo $price_filter === 'high' ? 'selected' : ''; ?>>Over RM 20,000</option>
+                    </select>
                 </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4>RM <?php echo number_format($stats['min_price'], 0); ?> - <?php echo number_format($stats['max_price'], 0); ?></h4>
-                        <p class="mb-0">Price Range</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-chart-line fa-2x"></i>
-                    </div>
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Package name or description...">
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Filters -->
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-2">
-                <label for="status" class="form-label">Status</label>
-                <select class="form-select" id="status" name="status">
-                    <option value="">All Statuses</option>
-                    <option value="active" <?php echo $status_filter === 'active' ? 'selected' : ''; ?>>Active</option>
-                    <option value="inactive" <?php echo $status_filter === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="price2" class="form-label">Price Range</label>
-                <select class="form-select" id="price2" name="price2">
-                    <option value="">All Prices</option>
-                    <option value="low" <?php echo $price_filter === 'low' ? 'selected' : ''; ?>>Under RM 10,000</option>
-                    <option value="medium" <?php echo $price_filter === 'medium' ? 'selected' : ''; ?>>RM 10,000 - 20,000</option>
-                    <option value="high" <?php echo $price_filter === 'high' ? 'selected' : ''; ?>>Over RM 20,000</option>
-                </select>
-            </div>
-            <div class="col-md-6">
-                <label for="search" class="form-label">Search</label>
-                <input type="text" class="form-control" id="search" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Package name or description...">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">&nbsp;</label>
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">Filter</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Packages -->
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Wedding Packages</h5>
-        <div>
-            <button class="btn btn-success btn-sm" onclick="exportPackages()">
-                <i class="fas fa-download"></i> Export
-            </button>
-            <button class="btn btn-primary btn-sm" onclick="addPackage()">
-                <i class="fas fa-plus"></i> Add Package
-            </button>
-        </div>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <?php if (empty($packages)): ?>
-                <div class="col-12">
-                    <div class="text-center py-5">
-                        <i class="fas fa-gift fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No packages found</h5>
-                        <p class="text-muted">Create your first wedding package to get started.</p>
-                        <button class="btn btn-primary" onclick="addPackage()">
-                            <i class="fas fa-plus"></i> Add Package
-                        </button>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Filter</button>
                     </div>
-                </div>
-            <?php else: ?>
-                <?php foreach ($packages as $package): ?>
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card h-100 <?php echo $package['status'] === 'inactive' ? 'opacity-75' : ''; ?>">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0"><?php echo htmlspecialchars($package['name']); ?></h6>
-                                <span class="badge bg-<?php echo $package['status'] === 'active' ? 'success' : 'secondary'; ?>">
-                                    <?php echo ucfirst($package['status']); ?>
-                                </span>
-                            </div>
-                            <div class="card-body">
-                                <div class="text-center mb-3">
-                                    <h3 class="text-primary">RM <?php echo number_format($package['price'], 2); ?></h3>
-                                </div>
-
-                                <p class="text-muted small"><?php echo htmlspecialchars($package['description']); ?></p>
-
-                                <div class="row text-center mb-3">
-                                    <div class="col-6">
-                                        <div class="border-end">
-                                            <small class="text-muted d-block">Duration</small>
-                                            <strong><?php echo $package['duration_hours']; ?> hours</strong>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <small class="text-muted d-block">Max Guests</small>
-                                        <strong><?php echo number_format($package['max_guests']); ?></strong>
-                                    </div>
-                                </div>
-
-                                <?php if ($package['features']): ?>
-                                    <?php $features = json_decode($package['features'], true); ?>
-                                    <div class="mb-3">
-                                        <small class="text-muted d-block mb-2">Features:</small>
-                                        <ul class="list-unstyled small">
-                                            <?php foreach (array_slice($features, 0, 4) as $feature): ?>
-                                                <li><i class="fas fa-check text-success me-2"></i><?php echo htmlspecialchars($feature); ?></li>
-                                            <?php endforeach; ?>
-                                            <?php if (count($features) > 4): ?>
-                                                <li class="text-muted">... and <?php echo count($features) - 4; ?> more</li>
-                                            <?php endif; ?>
-                                        </ul>
-                                    </div>
-                                <?php endif; ?>
-
-                                <div class="row text-center small text-muted">
-                                    <div class="col-6">
-                                        <div class="border-end">
-                                            <span class="d-block">Total Bookings</span>
-                                            <strong class="text-primary"><?php echo number_format($package['booking_count']); ?></strong>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <span class="d-block">Active Bookings</span>
-                                        <strong class="text-warning"><?php echo number_format($package['active_bookings']); ?></strong>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-footer">
-                                <div class="btn-group w-100" role="group">
-                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="viewPackage(<?php echo $package['id']; ?>)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="editPackage(<?php echo $package['id']; ?>)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-<?php echo $package['status'] === 'active' ? 'warning' : 'success'; ?> btn-sm" onclick="toggleStatus(<?php echo $package['id']; ?>, '<?php echo $package['status']; ?>')">
-                                        <i class="fas fa-<?php echo $package['status'] === 'active' ? 'pause' : 'play'; ?>"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deletePackage(<?php echo $package['id']; ?>)">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
-
-<!-- Package Form Modal -->
-<div class="modal fade" id="packageModal" tabindex="-1" aria-labelledby="packageModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="packageModalTitle">Add Package</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="packageForm">
-                <div class="modal-body">
-                    <input type="hidden" id="package_id" name="id">
-
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Package Name *</label>
-                                <input type="text" class="form-control" id="name" name="name" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="status" class="form-label">Status</label>
-                                <select class="form-select" id="package_status" name="status">
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="price" class="form-label">Price (RM) *</label>
-                                <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="duration_hours" class="form-label">Duration (Hours)</label>
-                                <input type="number" class="form-control" id="duration_hours" name="duration_hours" min="1" value="8">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="max_guests" class="form-label">Max Guests</label>
-                                <input type="number" class="form-control" id="max_guests" name="max_guests" min="1" value="100">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="features" class="form-label">Features</label>
-                        <textarea class="form-control" id="features" name="features" rows="6" placeholder="Enter each feature on a new line..."></textarea>
-                        <div class="form-text">Enter each feature on a separate line</div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Package</button>
                 </div>
             </form>
         </div>
     </div>
-</div>
 
-<!-- Package Details Modal -->
-<div class="modal fade" id="packageDetailsModal" tabindex="-1" aria-labelledby="packageDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="packageDetailsModalLabel">Package Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Packages -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Wedding Packages</h5>
+            <div>
+                <button class="btn btn-success btn-sm" onclick="exportPackages()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="addPackage()">
+                    <i class="fas fa-plus"></i> Add Package
+                </button>
             </div>
-            <div class="modal-body" id="packageDetails">
-                <div class="text-center">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <?php if (empty($packages)): ?>
+                    <div class="col-12">
+                        <div class="text-center py-5">
+                            <i class="fas fa-gift fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No packages found</h5>
+                            <p class="text-muted">Create your first wedding package to get started.</p>
+                            <button class="btn btn-primary" onclick="addPackage()">
+                                <i class="fas fa-plus"></i> Add Package
+                            </button>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($packages as $package): ?>
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100 <?php echo $package['status'] === 'inactive' ? 'opacity-75' : ''; ?>">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0"><?php echo htmlspecialchars($package['name']); ?></h6>
+                                    <span class="badge bg-<?php echo $package['status'] === 'active' ? 'success' : 'secondary'; ?>">
+                                        <?php echo ucfirst($package['status']); ?>
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center mb-3">
+                                        <h3 class="text-primary">RM <?php echo number_format($package['price'], 2); ?></h3>
+                                    </div>
+
+                                    <p class="text-muted small"><?php echo htmlspecialchars($package['description']); ?></p>
+
+                                    <div class="row text-center mb-3">
+                                        <div class="col-6">
+                                            <div class="border-end">
+                                                <small class="text-muted d-block">Duration</small>
+                                                <strong><?php echo $package['duration_hours']; ?> hours</strong>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Max Guests</small>
+                                            <strong><?php echo number_format($package['max_guests']); ?></strong>
+                                        </div>
+                                    </div>
+
+                                    <?php if ($package['features']): ?>
+                                        <?php $features = json_decode($package['features'], true); ?>
+                                        <div class="mb-3">
+                                            <small class="text-muted d-block mb-2">Features:</small>
+                                            <ul class="list-unstyled small">
+                                                <?php foreach (array_slice($features, 0, 4) as $feature): ?>
+                                                    <li><i class="fas fa-check text-success me-2"></i><?php echo htmlspecialchars($feature); ?></li>
+                                                <?php endforeach; ?>
+                                                <?php if (count($features) > 4): ?>
+                                                    <li class="text-muted">... and <?php echo count($features) - 4; ?> more</li>
+                                                <?php endif; ?>
+                                            </ul>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <div class="row text-center small text-muted">
+                                        <div class="col-6">
+                                            <div class="border-end">
+                                                <span class="d-block">Total Bookings</span>
+                                                <strong class="text-primary"><?php echo number_format($package['booking_count']); ?></strong>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="d-block">Active Bookings</span>
+                                            <strong class="text-warning"><?php echo number_format($package['active_bookings']); ?></strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="btn-group w-100" role="group">
+                                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="viewPackage(<?php echo $package['id']; ?>)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="editPackage(<?php echo $package['id']; ?>)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-<?php echo $package['status'] === 'active' ? 'warning' : 'success'; ?> btn-sm" onclick="toggleStatus(<?php echo $package['id']; ?>, '<?php echo $package['status']; ?>')">
+                                            <i class="fas fa-<?php echo $package['status'] === 'active' ? 'pause' : 'play'; ?>"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="deletePackage(<?php echo $package['id']; ?>)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Package Form Modal -->
+    <div class="modal fade" id="packageModal" tabindex="-1" role="dialog" aria-labelledby="packageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="packageModalTitle">Add Package</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="packageForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="package_id" name="id">
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="name" class="control-label">Package Name *</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="status" class="control-label">Status</label>
+                                    <select class="form-control" id="package_status" name="status">
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description" class="control-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="price" class="control-label">Price (RM) *</label>
+                                    <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="duration_hours" class="control-label">Duration (Hours)</label>
+                                    <input type="number" class="form-control" id="duration_hours" name="duration_hours" min="1" value="8">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="max_guests" class="control-label">Max Guests</label>
+                                    <input type="number" class="form-control" id="max_guests" name="max_guests" min="1" value="100">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="features" class="control-label">Features</label>
+                            <textarea class="form-control" id="features" name="features" rows="6" placeholder="Enter each feature on a new line..."></textarea>
+                            <small class="form-text text-muted">Enter each feature on a separate line</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Save Package</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Package Details Modal -->
+    <div class="modal fade" id="packageDetailsModal" tabindex="-1" role="dialog" aria-labelledby="packageDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="packageDetailsModalLabel">Package Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="packageDetails">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 </div>
 
 <?php include 'layouts/footer.php'; ?>
 
-<style>
-/* Modal styling fixes */
-.modal-backdrop {
-    z-index: 1040 !important;
-}
 
-.modal {
-    z-index: 1050 !important;
-}
-
-.modal-dialog {
-    z-index: 1060 !important;
-}
-
-.modal-dialog-centered {
-    display: flex;
-    align-items: center;
-    min-height: calc(100% - 1rem);
-}
-
-.modal-content {
-    background-color: #fff;
-    border: 1px solid rgba(0,0,0,.2);
-    border-radius: 0.375rem;
-    box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
-}
-
-.modal-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.modal-body {
-    position: relative;
-    padding: 1rem;
-}
-</style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize package modals with proper event handlers
-    const packageModal = document.getElementById('packageModal');
-    const packageDetailsModal = document.getElementById('packageDetailsModal');
-    
-    if (packageModal) {
-        packageModal.addEventListener('show.bs.modal', function () {
-            document.body.classList.add('modal-open');
-        });
-        
-        packageModal.addEventListener('hidden.bs.modal', function () {
-            document.body.classList.remove('modal-open');
-            // Reset form when modal is closed
-            document.getElementById('packageForm').reset();
-            document.getElementById('package_id').value = '';
-        });
-    }
-    
-    if (packageDetailsModal) {
-        packageDetailsModal.addEventListener('show.bs.modal', function () {
-            document.body.classList.add('modal-open');
-        });
-        
-        packageDetailsModal.addEventListener('hidden.bs.modal', function () {
-            document.body.classList.remove('modal-open');
-            // Clear modal content when closed
-            document.getElementById('packageDetails').innerHTML = `
+    $(document).ready(function() {
+        // Initialize package modals with proper event handlers
+        const $packageModal = $('#packageModal');
+        const $packageDetailsModal = $('#packageDetailsModal');
+
+        if ($packageModal.length) {
+            $packageModal.on('show.bs.modal', function() {
+                $('body').addClass('modal-open');
+            });
+
+            $packageModal.on('hidden.bs.modal', function() {
+                $('body').removeClass('modal-open');
+                $('#packageForm')[0].reset();
+                $('#package_id').val('');
+            });
+        }
+
+        if ($packageDetailsModal.length) {
+            $packageDetailsModal.on('show.bs.modal', function() {
+                $('body').addClass('modal-open');
+            });
+
+            $packageDetailsModal.on('hidden.bs.modal', function() {
+                $('body').removeClass('modal-open');
+                $('#packageDetails').html(`
                 <div class="text-center">
                     <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="sr-only">Loading...</span>
                     </div>
                 </div>
-            `;
-        });
-    }
-});
-
-function addPackage() {
-        // Update modal title
-        const modalTitle = document.getElementById('packageModalTitle');
-        if (modalTitle) {
-            modalTitle.textContent = 'Add Package';
-        }
-        
-        // Reset form
-        document.getElementById('packageForm').reset();
-        document.getElementById('package_id').value = '';
-        
-        // Show modal
-        const packageModal = new bootstrap.Modal(document.getElementById('packageModal'));
-        packageModal.show();
-    }
-
-    function editPackage(packageId) {
-        // Update modal title
-        const modalTitle = document.getElementById('packageModalTitle');
-        if (modalTitle) {
-            modalTitle.textContent = 'Edit Package';
-        }
-
-        // Show modal with loading state
-        const packageModal = new bootstrap.Modal(document.getElementById('packageModal'));
-        packageModal.show();
-        
-        // Disable form while loading
-        const form = document.getElementById('packageForm');
-        const inputs = form.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => input.disabled = true);
-
-        // Load package data via AJAX
-        fetch(`../includes/ajax_handler.php?action=get_package_data&id=${packageId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    const pkg = data.package;
-                    document.getElementById('package_id').value = pkg.id;
-                    document.getElementById('name').value = pkg.name || '';
-                    document.getElementById('description').value = pkg.description || '';
-                    document.getElementById('price').value = pkg.price || '';
-                    document.getElementById('duration_hours').value = pkg.duration_hours || '';
-                    document.getElementById('max_guests').value = pkg.max_guests || '';
-                    document.getElementById('package_status').value = pkg.status || 'active';
-
-                    // Handle features
-                    if (pkg.features) {
-                        try {
-                            const features = JSON.parse(pkg.features);
-                            document.getElementById('features').value = features.join('\n');
-                        } catch (e) {
-                            document.getElementById('features').value = '';
-                        }
-                    } else {
-                        document.getElementById('features').value = '';
-                    }
-                    
-                    // Re-enable form inputs
-                    inputs.forEach(input => input.disabled = false);
-                } else {
-                    alert('Error loading package data: ' + (data.message || 'Unknown error'));
-                    packageModal.hide();
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error loading package data. Please try again.');
-                packageModal.hide();
+            `);
             });
-    }
+        }
 
-    function viewPackage(packageId) {
-        // Show loading state
-        const packageDetails = document.getElementById('packageDetails');
-        packageDetails.innerHTML = `
+        window.addPackage = function() {
+            $('#packageModalTitle').text('Add Package');
+            $('#packageForm')[0].reset();
+            $('#package_id').val('');
+            const packageModal = new bootstrap.Modal($packageModal[0]);
+            packageModal.show();
+        };
+
+        window.editPackage = function(packageId) {
+            $('#packageModalTitle').text('Edit Package');
+            const packageModal = new bootstrap.Modal($packageModal[0]);
+            packageModal.show();
+
+            const $form = $('#packageForm');
+            const $inputs = $form.find('input, select, textarea');
+            $inputs.prop('disabled', true);
+
+            $.ajax({
+                    url: `../includes/ajax_handler.php?action=get_package_data&id=${packageId}`,
+                    method: 'GET',
+                    dataType: 'json'
+                })
+                .done(function(data) {
+                    if (data.success) {
+                        const pkg = data.package;
+                        $('#package_id').val(pkg.id);
+                        $('#name').val(pkg.name || '');
+                        $('#description').val(pkg.description || '');
+                        $('#price').val(pkg.price || '');
+                        $('#duration_hours').val(pkg.duration_hours || '');
+                        $('#max_guests').val(pkg.max_guests || '');
+                        $('#package_status').val(pkg.status || 'active');
+
+                        // Handle features
+                        try {
+                            const features = pkg.features ? JSON.parse(pkg.features) : [];
+                            $('#features').val(features.join('\n'));
+                        } catch (e) {
+                            $('#features').val('');
+                        }
+
+                        $inputs.prop('disabled', false);
+                    } else {
+                        alert('Error loading package data: ' + (data.message || 'Unknown error'));
+                        packageModal.hide();
+                    }
+                })
+                .fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error('Error:', errorThrown);
+                    alert('Error loading package data. Please try again.');
+                    packageModal.hide();
+                });
+        };
+
+        window.viewPackage = function(packageId) {
+            const $packageDetails = $('#packageDetails');
+            $packageDetails.html(`
             <div class="text-center">
                 <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
+                    <span class="sr-only">Loading...</span>
                 </div>
                 <p class="mt-2">Loading package details...</p>
             </div>
-        `;
-        
-        // Show modal immediately with loading state
-        const packageDetailsModal = new bootstrap.Modal(document.getElementById('packageDetailsModal'), {
-            backdrop: 'static',
-            keyboard: false
-        });
-        packageDetailsModal.show();
-        
-        // Load package details via AJAX
-        fetch(`../includes/ajax_handler.php?action=get_package_details&id=${packageId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    packageDetails.innerHTML = data.html;
-                    // Re-enable backdrop and keyboard after loading
-                    packageDetailsModal._config.backdrop = true;
-                    packageDetailsModal._config.keyboard = true;
-                } else {
-                    packageDetails.innerHTML = `
-                        <div class="alert alert-danger">
-                            <h6>Error Loading Package Details</h6>
-                            <p>${data.message || 'Unknown error occurred'}</p>
-                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-dismiss="modal">Close</button>
-                        </div>
-                    `;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                packageDetails.innerHTML = `
-                    <div class="alert alert-danger">
-                        <h6>Connection Error</h6>
-                        <p>Failed to load package details. Please check your connection and try again.</p>
-                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-sm btn-primary" onclick="viewPackage(${packageId})">Retry</button>
-                    </div>
-                `;
+        `);
+
+            const packageDetailsModal = new bootstrap.Modal($packageDetailsModal[0], {
+                backdrop: 'static',
+                keyboard: false
             });
-    }
+            packageDetailsModal.show();
 
-    function toggleStatus(packageId, currentStatus) {
-        const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-        const action = newStatus === 'active' ? 'activate' : 'deactivate';
-
-        Swal.fire({
-            title: `${action.charAt(0).toUpperCase() + action.slice(1)} Package?`,
-            text: `Are you sure you want to ${action} this package?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: newStatus === 'active' ? '#28a745' : '#ffc107',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: `Yes, ${action} it!`,
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Show loading state
-                Swal.fire({
-                    title: `${action.charAt(0).toUpperCase() + action.slice(1)}ing...`,
-                    text: 'Please wait while we update the package status.',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    showConfirmButton: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                fetch('packages.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `action=toggle_status&id=${packageId}&current_status=${currentStatus}`
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire({
-                                title: 'Success!',
-                                text: `Package has been ${action}d successfully.`,
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: data.message || 'An error occurred while updating the package status.',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'An error occurred while updating the package status.',
-                            icon: 'error',
-                            confirmButtonText: 'OK'
-                        });
-                    });
-            }
-        });
-    }
-
-    function deletePackage(packageId) {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: 'You won\'t be able to revert this! This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, delete it!',
-            cancelButtonText: 'Cancel',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Show loading state
-                Swal.fire({
-                    title: 'Deleting...',
-                    text: 'Please wait while we delete the package.',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    showConfirmButton: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                fetch('packages.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `action=delete_package&id=${packageId}`
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            Swal.fire({
-                                title: 'Deleted!',
-                                text: 'Package has been deleted successfully.',
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: data.message || 'An error occurred while deleting the package.',
-                                icon: 'error',
-                                confirmButtonText: 'OK'
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'An error occurred while deleting the package.',
-                            icon: 'error',
-                            confirmButtonText: 'OK'
-                        });
-                    });
-            }
-        });
-    }
-
-    function exportPackages() {
-        const params = new URLSearchParams(window.location.search);
-        params.set('export', '1');
-        window.location.href = 'packages.php?' + params.toString();
-    }
-
-    // Handle form submission
-    document.getElementById('packageForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const submitButton = this.querySelector('button[type="submit"]');
-        const originalText = submitButton.textContent;
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
-
-        const formData = new FormData(this);
-        const isEdit = document.getElementById('package_id').value !== '';
-        formData.append('action', isEdit ? 'update_package' : 'add_package');
-
-        fetch('packages.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                console.log('Response status:', response.status); // Debug log
-                console.log('Response headers:', response.headers); // Debug log
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.text(); // Get as text first to see what we're receiving
-            })
-            .then(text => {
-                console.log('Raw response text:', text); // Debug log
-                try {
-                    const data = JSON.parse(text);
-                    console.log('Parsed data:', data); // Debug log
-                    return data;
-                } catch (parseError) {
-                    console.error('JSON parse error:', parseError);
-                    console.error('Response text was:', text);
-                    throw new Error('Invalid JSON response: ' + parseError.message);
-                }
-            })
-            .then(data => {
-                console.log('Response received:', data); // Debug log
-                if (data.success) {
-                    // Hide modal first
-                    const packageModal = bootstrap.Modal.getInstance(document.getElementById('packageModal'));
-                    if (packageModal) {
-                        packageModal.hide();
-                    }
-                    
-                    // Show success message
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = 'alert alert-success alert-dismissible fade show mb-3';
-                    alertDiv.innerHTML = `
-                        <strong>Success!</strong> Package ${isEdit ? 'updated' : 'added'} successfully.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    `;
-                    
-                    // Insert alert at the top of main content area
-                    const mainContent = document.querySelector('.main-content');
-                    if (mainContent) {
-                        // Find the first card or content element and insert before it
-                        const firstCard = mainContent.querySelector('.card, .row');
-                        if (firstCard) {
-                            mainContent.insertBefore(alertDiv, firstCard);
-                        } else {
-                            mainContent.appendChild(alertDiv);
-                        }
+            $.ajax({
+                    url: `../includes/ajax_handler.php?action=get_package_details&id=${packageId}`,
+                    method: 'GET',
+                    dataType: 'json'
+                })
+                .done(function(data) {
+                    if (data.success) {
+                        $packageDetails.html(data.html);
+                        packageDetailsModal._config.backdrop = true;
+                        packageDetailsModal._config.keyboard = true;
                     } else {
-                        // Fallback: insert after the page header
-                        const header = document.querySelector('h1');
-                        if (header && header.parentNode) {
-                            header.parentNode.insertBefore(alertDiv, header.nextSibling);
-                        }
+                        $packageDetails.html(`
+                    <div class="alert alert-danger">
+                        <h6>Error Loading Package Details</h6>
+                        <p>${data.message || 'Unknown error occurred'}</p>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-dismiss="modal">Close</button>
+                    </div>
+                `);
                     }
-                    
-                    // Reload page after a short delay
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
-                } else {
-                    alert('Error: ' + (data.message || 'Unknown error occurred'));
+                })
+                .fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error('Error:', errorThrown);
+                    $packageDetails.html(`
+                <div class="alert alert-danger">
+                    <h6>Connection Error</h6>
+                    <p>Failed to load package details. Please check your connection and try again.</p>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="viewPackage(${packageId})">Retry</button>
+                </div>
+            `);
+                });
+        };
+
+        window.toggleStatus = function(packageId, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            const action = newStatus === 'active' ? 'activate' : 'deactivate';
+
+            Swal.fire({
+                title: `${action.charAt(0).toUpperCase() + action.slice(1)} Package?`,
+                text: `Are you sure you want to ${action} this package?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: newStatus === 'active' ? '#28a745' : '#ffc107',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: `Yes, ${action} it!`,
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: `${action.charAt(0).toUpperCase() + action.slice(1)}ing...`,
+                        text: 'Please wait while we update the package status.',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                            url: 'packages.php',
+                            method: 'POST',
+                            contentType: 'application/x-www-form-urlencoded',
+                            data: `action=toggle_status&id=${packageId}&current_status=${currentStatus}`,
+                            dataType: 'json'
+                        })
+                        .done(function(data) {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: `Package has been ${action}d successfully.`,
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: data.message || 'An error occurred while updating the package status.',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
+                            }
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown) {
+                            console.error('Error:', errorThrown);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'An error occurred while updating the package status.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        });
                 }
-            })
-            .catch(error => {
-                console.error('Error details:', error);
-                console.error('Error message:', error.message);
-                console.error('Error stack:', error.stack);
-                alert('Error saving package: ' + error.message + '. Please check the console for more details and try again.');
-            })
-            .finally(() => {
-                // Re-enable submit button
-                submitButton.disabled = false;
-                submitButton.textContent = originalText;
             });
+        };
+
+        window.deletePackage = function(packageId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You won\'t be able to revert this! This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        text: 'Please wait while we delete the package.',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                            url: 'packages.php',
+                            method: 'POST',
+                            contentType: 'application/x-www-form-urlencoded',
+                            data: `action=delete_package&id=${packageId}`,
+                            dataType: 'json'
+                        })
+                        .done(function(data) {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Deleted!',
+                                    text: 'Package has been deleted successfully.',
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: data.message || 'An error occurred while deleting the package.',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
+                            }
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown) {
+                            console.error('Error:', errorThrown);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'An error occurred while deleting the package.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        });
+                }
+            });
+        };
+
+        window.exportPackages = function() {
+            const params = new URLSearchParams(window.location.search);
+            params.set('export', '1');
+            window.location.href = 'packages.php?' + params.toString();
+        };
+
+        $('#packageForm').on('submit', function(e) {
+            e.preventDefault();
+
+            const $submitButton = $(this).find('button[type="submit"]');
+            const originalText = $submitButton.text();
+            $submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
+
+            const formData = $(this).serialize();
+            const isEdit = $('#package_id').val() !== '';
+            const action = isEdit ? 'update_package' : 'add_package';
+
+            $.ajax({
+                    url: 'packages.php',
+                    method: 'POST',
+                    data: formData + `&action=${action}`,
+                    dataType: 'json'
+                })
+                .done(function(data) {
+                    console.log('Response received:', data);
+                    if (data.success) {
+                        const packageModal = bootstrap.Modal.getInstance($packageModal[0]);
+                        if (packageModal) {
+                            packageModal.hide();
+                        }
+
+                        const $alertDiv = $('<div>').addClass('alert alert-success alert-dismissible fade show mb-3').html(`
+                    <strong>Success!</strong> Package ${isEdit ? 'updated' : 'added'} successfully.
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                `);
+
+                        const $mainContent = $('.main-content');
+                        if ($mainContent.length) {
+                            const $firstCard = $mainContent.find('.card, .row').first();
+                            if ($firstCard.length) {
+                                $alertDiv.insertBefore($firstCard);
+                            } else {
+                                $mainContent.append($alertDiv);
+                            }
+                        } else {
+                            const $header = $('h1');
+                            if ($header.length) {
+                                $alertDiv.insertAfter($header);
+                            }
+                        }
+
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        alert('Error: ' + (data.message || 'Unknown error occurred'));
+                    }
+                })
+                .fail(function(jqXHR, textStatus, errorThrown) {
+                    console.error('Error:', errorThrown);
+                    alert('Error saving package: ' + errorThrown + '. Please try again.');
+                })
+                .always(function() {
+                    $submitButton.prop('disabled', false).text(originalText);
+                });
+        });
     });
 </script>

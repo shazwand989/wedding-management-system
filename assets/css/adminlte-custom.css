@@ -1,0 +1,126 @@
+:root {
+  /* Primary color: Inspired by molten metal glow (using provided --primary-color) */
+  --primary: #d4af37; /* Gold-like hue for primary buttons, navs, and highlights */
+  --primary-hover: #b89b30; /* Slightly darker for hover states */
+  --primary-focus: #b89b30; /* Consistent focus state */
+  --primary-light: #e6c86e; /* Lighter variant for subtle backgrounds */
+
+  /* Secondary color: Soft off-white for backgrounds (using provided --secondary-color) */
+  --secondary: #f8f4e6; /* Creamy off-white for secondary elements */
+  --secondary-hover: #e8e4d6; /* Slightly darker for hover */
+  --secondary-light: #fffcf5; /* Near-white for subtle contrasts */
+
+  /* Accent color: Earthy bronze for accents (using provided --accent-color) */
+  --accent: #8b4513; /* Rustic bronze for icons, borders, or highlights */
+  --accent-hover: #723a10; /* Darker bronze for hover states */
+
+  /* Text colors */
+  --gray-dark: #333; /* Main text color (using provided --text-color) */
+  --gray: #666; /* Lighter text for secondary content */
+  --text-light: #f5f5f5; /* Light text for dark backgrounds (using provided --light-gray) */
+
+  /* Backgrounds */
+  --body-bg: #f5f5f5; /* Light gray background (using provided --light-gray) */
+  --content-bg: #fff; /* White for cards and main content areas */
+  --sidebar-light-bg: #f8f4e6; /* Secondary color for light sidebar */
+  --sidebar-dark-bg: #2f2f2f; /* Dark industrial gray for dark sidebar */
+
+  /* Border color */
+  --border-color: #ddd; /* Subtle border color (using provided --border-color) */
+
+  /* Contextual colors */
+  --success: #28a745; /* Green for success states (using provided --success-color) */
+  --success-hover: #218838; /* Darker green for hover */
+  --warning: #ffc107; /* Amber for warnings (using provided --warning-color) */
+  --warning-hover: #e0a800; /* Darker amber for hover */
+  --danger: #dc3545; /* Red for errors (using provided --danger-color) */
+  --danger-hover: #c82333; /* Darker red for hover */
+  --info: #17a2b8; /* Cyan for info states (using provided --info-color) */
+  --info-hover: #138496; /* Darker cyan for hover */
+
+  /* Additional welding-inspired colors */
+  --spark-orange: #ff4500; /* Fiery orange for welding sparks */
+  --metal-gray: #4a4a4a; /* Dark metallic gray for industrial elements */
+  --glow-red: #ff6347; /* Reddish glow for heat-related highlights */
+}
+
+/* AdminLTE component overrides */
+.navbar-light {
+  background-color: var(--secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.main-sidebar.sidebar-light-primary {
+  background-color: var(--sidebar-light-bg);
+}
+
+.main-sidebar.sidebar-dark-primary {
+  background-color: var(--sidebar-dark-bg);
+}
+
+.card {
+  background-color: var(--content-bg);
+  border: 1px solid var(--border-color);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--secondary);
+  border-color: var(--border-color);
+  color: var(--gray-dark);
+}
+.btn-secondary:hover {
+  background-color: var(--secondary-hover);
+  border-color: var(--border-color);
+}
+
+.alert-success {
+  background-color: var(--success);
+  border-color: var(--success);
+  color: var(--text-light);
+}
+.alert-warning {
+  background-color: var(--warning);
+  border-color: var(--warning);
+  color: var(--gray-dark);
+}
+.alert-danger {
+  background-color: var(--danger);
+  border-color: var(--danger);
+  color: var(--text-light);
+}
+.alert-info {
+  background-color: var(--info);
+  border-color: var(--info);
+  color: var(--text-light);
+}
+
+/* Sidebar menu items */
+.nav-sidebar .nav-link {
+  color: var(--gray-dark);
+}
+.nav-sidebar .nav-link:hover {
+  background-color: var(--primary-light);
+  color: var(--gray-dark);
+}
+
+/* Welding-specific accents */
+.welding-spark {
+  color: var(--spark-orange);
+}
+.welding-metal {
+  background-color: var(--metal-gray);
+  color: var(--text-light);
+}
+.welding-glow {
+  border-color: var(--glow-red);
+  box-shadow: 0 0 5px var(--glow-red);
+}
