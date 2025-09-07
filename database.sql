@@ -160,3 +160,66 @@ INSERT INTO vendors (user_id, business_name, service_type, description, price_ra
 (2, 'John Photography Studio', 'photography', 'Professional wedding photography with 10+ years experience', 'RM 2000 - RM 8000', 4.8, 45, 'active'),
 (3, 'Delicious Catering', 'catering', 'Full-service catering for weddings and special events', 'RM 30 - RM 80 per person', 4.6, 32, 'active'),
 (4, 'Beautiful Decorations', 'decoration', 'Creative wedding decoration and floral arrangements', 'RM 3000 - RM 15000', 4.9, 28, 'active');
+
+-- Wedding tasks table for timeline management
+CREATE TABLE wedding_tasks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    task_title VARCHAR(255) NOT NULL,
+    description TEXT,
+    due_date DATE NOT NULL,
+    priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
+    status ENUM('pending', 'in_progress', 'completed') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Wedding budget table
+CREATE TABLE wedding_budgets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    total_budget DECIMAL(12,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Budget expenses table
+CREATE TABLE budget_expenses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    category ENUM('venue', 'photography', 'attire', 'flowers', 'music', 'transportation', 'stationery', 'rings', 'miscellaneous') NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    vendor_name VARCHAR(255),
+    expense_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Add missing columns to users table for profile management
+ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth DATE NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS gender ENUM('male', 'female', 'other') NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT NULL;
+
+-- Add missing columns to vendors table for better filtering
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS location VARCHAR(255) NULL;
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS specialties TEXT NULL;
+
+-- Insert sample timeline tasks
+INSERT INTO wedding_tasks (customer_id, task_title, description, due_date, priority, status) VALUES 
+(1, 'Book venue', 'Research and book the perfect wedding venue', '2024-06-01', 'high', 'pending'),
+(1, 'Choose wedding dress', 'Visit bridal shops and select wedding dress', '2024-07-15', 'high', 'pending'),
+(1, 'Send invitations', 'Design and send wedding invitations to guests', '2024-08-01', 'medium', 'pending'),
+(1, 'Finalize menu', 'Meet with caterer to finalize wedding menu', '2024-08-15', 'medium', 'pending'),
+(1, 'Wedding rehearsal', 'Conduct wedding ceremony rehearsal', '2024-09-20', 'high', 'pending');
+
+-- Insert sample budget and expenses
+INSERT INTO wedding_budgets (customer_id, total_budget) VALUES (1, 25000.00);
+
+INSERT INTO budget_expenses (customer_id, category, description, amount, vendor_name, expense_date) VALUES 
+(1, 'venue', 'Wedding venue booking deposit', 5000.00, 'Grand Ballroom', '2024-02-15'),
+(1, 'photography', 'Wedding photography package', 3000.00, 'John Photography Studio', '2024-03-01'),
+(1, 'attire', 'Wedding dress and accessories', 2500.00, 'Bridal Boutique', '2024-03-15'),
+(1, 'flowers', 'Bridal bouquet and decorations', 1500.00, 'Beautiful Decorations', '2024-04-01');
