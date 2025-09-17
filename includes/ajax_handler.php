@@ -59,7 +59,7 @@ try {
             
             $stmt = $pdo->prepare("
                 SELECT b.*, u.full_name as customer_name, u.email, u.phone,
-                       wp.name as package_name
+                       wp.name as package_name, wp.price as package_price
                 FROM bookings b
                 LEFT JOIN users u ON b.customer_id = u.id
                 LEFT JOIN wedding_packages wp ON b.package_id = wp.id
@@ -72,12 +72,14 @@ try {
                 throw new Exception('Booking not found');
             }
             
-            // Get booking vendors
+            // Get assigned vendors
             $stmt = $pdo->prepare("
-                SELECT bv.*, v.business_name, v.service_type
+                SELECT bv.*, v.business_name, v.service_type, u.full_name as vendor_name
                 FROM booking_vendors bv
-                LEFT JOIN vendors v ON bv.vendor_id = v.id
+                JOIN vendors v ON bv.vendor_id = v.id
+                JOIN users u ON v.user_id = u.id
                 WHERE bv.booking_id = ?
+                ORDER BY bv.service_type
             ");
             $stmt->execute([$booking_id]);
             $vendors = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -93,19 +95,120 @@ try {
             
             $html = "<div class='row'>";
             $html .= "<div class='col-md-6'>";
-            $html .= "<h6>Customer Information</h6>";
+            $html .= "<h6><i class='fas fa-user text-primary'></i> Customer Information</h6>";
             $html .= "<p><strong>Name:</strong> " . htmlspecialchars($booking['customer_name']) . "</p>";
             $html .= "<p><strong>Email:</strong> " . htmlspecialchars($booking['email']) . "</p>";
             $html .= "<p><strong>Phone:</strong> " . htmlspecialchars($booking['phone'] ?: 'Not provided') . "</p>";
             $html .= "</div>";
             $html .= "<div class='col-md-6'>";
-            $html .= "<h6>Event Details</h6>";
+            $html .= "<h6><i class='fas fa-calendar text-info'></i> Event Details</h6>";
             $html .= "<p><strong>Date:</strong> " . date('M j, Y', strtotime($booking['event_date'])) . "</p>";
             $html .= "<p><strong>Time:</strong> " . date('g:i A', strtotime($booking['event_time'])) . "</p>";
             $html .= "<p><strong>Venue:</strong> " . htmlspecialchars($booking['venue_name'] ?: 'Not specified') . "</p>";
             $html .= "<p><strong>Guests:</strong> " . number_format($booking['guest_count']) . "</p>";
             $html .= "</div>";
             $html .= "</div>";
+            
+            // Package Information
+            if ($booking['package_name']) {
+                $html .= "<div class='mt-3'>";
+                $html .= "<h6><i class='fas fa-box text-success'></i> Package Information</h6>";
+                $html .= "<div class='row'>";
+                $html .= "<div class='col-md-6'>";
+                $html .= "<p><strong>Package:</strong> " . htmlspecialchars($booking['package_name']) . "</p>";
+                $html .= "</div>";
+                $html .= "<div class='col-md-6'>";
+                $html .= "<p><strong>Package Price:</strong> RM " . number_format($booking['package_price'], 2) . "</p>";
+                $html .= "</div>";
+                $html .= "</div>";
+                $html .= "</div>";
+            }
+            
+            // Pricing Information
+            $html .= "<div class='mt-3'>";
+            $html .= "<h6><i class='fas fa-money-bill text-warning'></i> Pricing Information</h6>";
+            $html .= "<div class='row'>";
+            $html .= "<div class='col-md-4'>";
+            $html .= "<p><strong>Total Amount:</strong> RM " . number_format($booking['total_amount'], 2) . "</p>";
+            $html .= "</div>";
+            $html .= "<div class='col-md-4'>";
+            $html .= "<p><strong>Paid Amount:</strong> RM " . number_format($booking['paid_amount'], 2) . "</p>";
+            $html .= "</div>";
+            $html .= "<div class='col-md-4'>";
+            $remaining = $booking['total_amount'] - $booking['paid_amount'];
+            $html .= "<p><strong>Balance:</strong> <span class='" . ($remaining > 0 ? 'text-danger' : 'text-success') . "'>RM " . number_format($remaining, 2) . "</span></p>";
+            $html .= "</div>";
+            $html .= "</div>";
+            $html .= "</div>";
+
+            // Vendor Information
+            if (!empty($vendors)) {
+                $html .= "<div class='mt-3'>";
+                $html .= "<h6><i class='fas fa-users text-purple'></i> Assigned Vendors</h6>";
+                $html .= "<div class='table-responsive'>";
+                $html .= "<table class='table table-sm table-bordered'>";
+                $html .= "<thead><tr><th>Business</th><th>Service</th><th>Price</th><th>Status</th></tr></thead>";
+                $html .= "<tbody>";
+                foreach ($vendors as $vendor) {
+                    $status_color = [
+                        'pending' => 'warning',
+                        'confirmed' => 'success', 
+                        'cancelled' => 'danger'
+                    ][$vendor['status']] ?? 'secondary';
+                    
+                    $html .= "<tr>";
+                    $html .= "<td>" . htmlspecialchars($vendor['business_name']) . "</td>";
+                    $html .= "<td>" . ucfirst($vendor['service_type']) . "</td>";
+                    $html .= "<td>" . ($vendor['agreed_price'] ? 'RM ' . number_format($vendor['agreed_price'], 2) : 'TBD') . "</td>";
+                    $html .= "<td><span class='badge badge-{$status_color}'>" . ucfirst($vendor['status']) . "</span></td>";
+                    $html .= "</tr>";
+                }
+                $html .= "</tbody></table>";
+                $html .= "</div>";
+                $html .= "</div>";
+            }
+
+            // Status Information
+            $html .= "<div class='mt-3'>";
+            $html .= "<h6><i class='fas fa-info-circle text-info'></i> Status Information</h6>";
+            $html .= "<div class='row'>";
+            $html .= "<div class='col-md-6'>";
+            $booking_status_color = [
+                'pending' => 'warning',
+                'confirmed' => 'success',
+                'completed' => 'info',
+                'cancelled' => 'danger'
+            ][$booking['booking_status']] ?? 'secondary';
+            $html .= "<p><strong>Booking Status:</strong> <span class='badge badge-{$booking_status_color}'>" . ucfirst($booking['booking_status']) . "</span></p>";
+            $html .= "</div>";
+            $html .= "<div class='col-md-6'>";
+            $payment_status_color = [
+                'pending' => 'warning',
+                'partial' => 'info',
+                'paid' => 'success',
+                'refunded' => 'secondary'
+            ][$booking['payment_status']] ?? 'secondary';
+            $html .= "<p><strong>Payment Status:</strong> <span class='badge badge-{$payment_status_color}'>" . ucfirst($booking['payment_status']) . "</span></p>";
+            $html .= "</div>";
+            $html .= "</div>";
+            $html .= "</div>";
+
+            // Special Requests
+            if ($booking['special_requests']) {
+                $html .= "<div class='mt-3'>";
+                $html .= "<h6><i class='fas fa-clipboard-list text-secondary'></i> Special Requests</h6>";
+                $html .= "<p class='border p-2 rounded bg-light'>" . nl2br(htmlspecialchars($booking['special_requests'])) . "</p>";
+                $html .= "</div>";
+            }
+
+            // Edit Button for Admin
+            if ($_SESSION['role'] === 'admin') {
+                $html .= "<div class='mt-4 text-center'>";
+                $html .= "<a href='edit_booking.php?id={$booking_id}' class='btn btn-primary'>";
+                $html .= "<i class='fas fa-edit'></i> Edit Booking";
+                $html .= "</a>";
+                $html .= "</div>";
+            }
             
             echo json_encode(['success' => true, 'html' => $html]);
             break;

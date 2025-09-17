@@ -279,11 +279,16 @@ include 'layouts/header.php';
                                                 <i class="fas fa-eye"></i>
                                             </button>
 
+                                            <!-- Edit button -->
+                                            <a href="edit_booking.php?id=<?php echo $booking['id']; ?>" class="btn btn-sm btn-outline-info" title="Edit Booking">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+
                                             <!-- Status dropdown -->
                                             <div class="btn-group" role="group">
                                                 <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle"
                                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Update Status">
-                                                    <i class="fas fa-edit"></i>
+                                                    <i class="fas fa-sync"></i>
                                                 </button>
                                                 <div class="dropdown-menu">
                                                     <a class="dropdown-item" href="#" onclick="updateStatus(<?php echo $booking['id']; ?>, 'pending')">
@@ -515,7 +520,7 @@ include 'layouts/header.php';
                     {
                         "targets": [9], // Actions column
                         "className": "text-center",
-                        "width": "120px"
+                        "width": "150px"
                     }
                 ],
                 "language": {
