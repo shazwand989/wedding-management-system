@@ -1,12 +1,12 @@
 <?php
 // Database configuration
 define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_USER', 'wedding_user');
+define('DB_PASS', 'W3dd1ng_P@ss2024');
 define('DB_NAME', 'wedding_management');
 
 // Application settings
-define('SITE_URL', 'http://localhost/theWD/wedding-management-system/');
+define('SITE_URL', 'https://shazwan-danial.my/wedding-management-system/');
 define('SITE_NAME', 'Wedding Management System');
 
 // Create connection
