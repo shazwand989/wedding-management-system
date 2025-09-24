@@ -82,9 +82,23 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="toyyibpay-management.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'toyyibpay-management.php' ? 'active' : ''; ?>">
+                        <i class="nav-icon fas fa-money-check-alt"></i>
+                        <p>Payment Gateway</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="reports.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'reports.php' ? 'active' : ''; ?>">
                         <i class="nav-icon fas fa-chart-line"></i>
                         <p>Reports</p>
+                    </a>
+                </li>
+
+                <li class="nav-header">ANALYTICS</li>
+                <li class="nav-item">
+                    <a href="visitor-analytics.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'visitor-analytics.php' ? 'active' : ''; ?>">
+                        <i class="nav-icon fas fa-chart-bar"></i>
+                        <p>Visitor Analytics</p>
                     </a>
                 </li>
 

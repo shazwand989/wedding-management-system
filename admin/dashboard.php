@@ -117,6 +117,9 @@ include 'layouts/header.php';
     </div>
 </div>
 
+<!-- Visitor Analytics Widget -->
+<?php require_once '../includes/visitor_analytics_widget.php'; ?>
+
 <!-- Quick Actions -->
 <div class="card card-warning card-outline">
     <div class="card-header">

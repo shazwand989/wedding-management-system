@@ -94,8 +94,8 @@ INSERT INTO visitor_sessions (session_id, ip_address, user_agent, device_type, d
 ('test_session_3', '192.168.1.102', 'Mozilla/5.0 (iPad; CPU OS 14_0 like Mac OS X) AppleWebKit/605.1.15', 'tablet', 'iPad', 'Safari', 'iOS 14', '/packages.php', 2);
 
 -- Create indexes for better performance
-CREATE INDEX idx_visitor_sessions_created_date ON visitor_sessions(DATE(created_at));
-CREATE INDEX idx_page_views_created_date ON page_views(DATE(created_at));
+CREATE INDEX idx_visitor_sessions_created_date ON visitor_sessions(created_at);
+CREATE INDEX idx_page_views_created_date ON page_views(created_at);
 CREATE INDEX idx_visitor_sessions_device_mobile ON visitor_sessions(device_type, is_mobile);
 
 -- Create a view for easy visitor analytics

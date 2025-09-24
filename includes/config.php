@@ -44,4 +44,27 @@ function sanitize($data) {
 function generateToken() {
     return bin2hex(random_bytes(32));
 }
+
+// Initialize visitor tracking (only for public pages)
+if (!defined('ADMIN_ACCESS') && !defined('CUSTOMER_ACCESS') && !isset($_SESSION['skip_tracking'])) {
+    require_once __DIR__ . '/visitor_tracker.php';
+    
+    try {
+        $visitor_tracker = new VisitorTracker($pdo);
+        
+        // Get page title if available
+        $page_title = null;
+        if (isset($GLOBALS['page_title'])) {
+            $page_title = $GLOBALS['page_title'];
+        } elseif (defined('PAGE_TITLE')) {
+            $page_title = PAGE_TITLE;
+        }
+        
+        // Track the visit
+        $visitor_tracker->trackVisit($page_title);
+    } catch (Exception $e) {
+        // Silently ignore tracking errors to not break the site
+        error_log("Visitor tracking error: " . $e->getMessage());
+    }
+}
 ?>
