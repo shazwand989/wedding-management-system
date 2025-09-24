@@ -390,28 +390,52 @@ $(document).ready(function() {
             if (data.success) {
                 let html = '<h6>Bill Transactions</h6>';
                 
-                if (data.transactions.length === 0) {
+                // Show debug info
+                html += '<div class="alert alert-info small">';
+                html += '<strong>Debug Info:</strong><br>';
+                html += 'Response type: ' + typeof data.transactions + '<br>';
+                html += 'Array length: ' + (Array.isArray(data.transactions) ? data.transactions.length : 'Not an array') + '<br>';
+                html += '</div>';
+                
+                if (!data.transactions || data.transactions.length === 0) {
                     html += '<p class="text-muted">No transactions found for this bill code.</p>';
+                    
+                    // Show raw response for debugging
+                    html += '<div class="mt-3"><h6>Raw API Response (for debugging):</h6>';
+                    html += '<pre class="bg-light p-2 small">' + JSON.stringify(data.transactions, null, 2) + '</pre></div>';
                 } else {
                     html += '<div class="table-responsive"><table class="table table-sm">';
                     html += '<thead><tr><th>Bill Code</th><th>Status</th><th>Amount</th><th>Date</th><th>Transaction ID</th></tr></thead><tbody>';
                     
-                    data.transactions.forEach(function(trans) {
-                        const status = trans.billpaymentStatus == '1' ? 'Successful' : 
-                                     trans.billpaymentStatus == '2' ? 'Pending' : 'Failed';
-                        const statusClass = trans.billpaymentStatus == '1' ? 'success' : 
-                                          trans.billpaymentStatus == '2' ? 'warning' : 'danger';
+                    data.transactions.forEach(function(trans, index) {
+                        console.log('Processing transaction ' + index + ':', trans);
+                        
+                        // Handle different possible field names from ToyyibPay API
+                        const billCode = trans.billcode || trans.BillCode || trans.bill_code || 'N/A';
+                        const paymentStatus = trans.billpaymentStatus || trans.BillPaymentStatus || trans.bill_payment_status || '0';
+                        const paymentAmount = trans.billpaymentAmount || trans.BillPaymentAmount || trans.bill_payment_amount || 0;
+                        const paymentDate = trans.billpaymentDate || trans.BillPaymentDate || trans.bill_payment_date || '';
+                        const transactionId = trans.billpaymentTransactionId || trans.BillPaymentTransactionId || trans.bill_payment_transaction_id || '';
+                        
+                        const status = paymentStatus == '1' ? 'Successful' : 
+                                     paymentStatus == '2' ? 'Pending' : 'Failed';
+                        const statusClass = paymentStatus == '1' ? 'success' : 
+                                          paymentStatus == '2' ? 'warning' : 'danger';
                         
                         html += '<tr>';
-                        html += '<td>' + trans.billcode + '</td>';
+                        html += '<td>' + billCode + '</td>';
                         html += '<td><span class="badge badge-' + statusClass + '">' + status + '</span></td>';
-                        html += '<td>RM ' + (trans.billpaymentAmount / 100).toFixed(2) + '</td>';
-                        html += '<td>' + (trans.billpaymentDate || '-') + '</td>';
-                        html += '<td>' + (trans.billpaymentTransactionId || '-') + '</td>';
+                        html += '<td>RM ' + (paymentAmount / 100).toFixed(2) + '</td>';
+                        html += '<td>' + (paymentDate || '-') + '</td>';
+                        html += '<td>' + (transactionId || '-') + '</td>';
                         html += '</tr>';
                     });
                     
                     html += '</tbody></table></div>';
+                    
+                    // Show raw response for debugging
+                    html += '<div class="mt-3"><h6>Raw API Response (for debugging):</h6>';
+                    html += '<pre class="bg-light p-2 small">' + JSON.stringify(data.transactions, null, 2) + '</pre></div>';
                 }
                 
                 $('#billVerificationContent').html(html);

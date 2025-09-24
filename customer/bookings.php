@@ -253,8 +253,15 @@ include 'layouts/header.php';
                                     
                                     <div class="mb-3">
                                         <i class="fas fa-credit-card text-info"></i>
-                                        <strong>Paid:</strong> RM <?php echo number_format($booking['paid_amount'], 2); ?>
-                                        <?php if ($booking['total_amount'] > $booking['paid_amount']): ?>
+                                        <strong>Payment:</strong> RM <?php echo number_format($booking['paid_amount'], 2); ?>
+                                        <br>
+                                        <span class="badge badge-<?php
+                                            echo $booking['payment_status'] === 'paid' ? 'success' : 
+                                                ($booking['payment_status'] === 'partial' ? 'warning' : 'secondary');
+                                        ?>">
+                                            <?php echo ucfirst($booking['payment_status']); ?>
+                                        </span>
+                                        <?php if ($booking['total_amount'] > $booking['paid_amount'] && $booking['payment_status'] !== 'paid'): ?>
                                             <br><small class="text-warning">
                                                 Balance: RM <?php echo number_format($booking['total_amount'] - $booking['paid_amount'], 2); ?>
                                             </small>
@@ -271,7 +278,7 @@ include 'layouts/header.php';
                                                 <i class="fas fa-times"></i> Cancel
                                             </button>
                                         <?php endif; ?>
-                                        <?php if ($booking['total_amount'] > $booking['paid_amount'] && $booking['booking_status'] !== 'cancelled'): ?>
+                                        <?php if ($booking['total_amount'] > $booking['paid_amount'] && $booking['payment_status'] !== 'paid' && $booking['booking_status'] !== 'cancelled'): ?>
                                             <a href="payment.php?booking_id=<?php echo $booking['id']; ?>" class="btn btn-success btn-sm">
                                                 <i class="fas fa-credit-card"></i> Pay
                                             </a>
@@ -322,15 +329,21 @@ function viewBookingDetails(bookingId) {
     $.ajax({
         url: '../includes/ajax_handler.php',
         method: 'POST',
+        dataType: 'json',
         data: {
             action: 'get_booking_details',
             booking_id: bookingId
         },
         success: function(response) {
-            $('#bookingDetailsContent').html(response);
+            if (response.success) {
+                $('#bookingDetailsContent').html(response.html);
+            } else {
+                $('#bookingDetailsContent').html('<div class="alert alert-danger">Error: ' + (response.message || 'Unknown error') + '</div>');
+            }
         },
-        error: function() {
-            $('#bookingDetailsContent').html('<div class="alert alert-danger">Error loading booking details.</div>');
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            $('#bookingDetailsContent').html('<div class="alert alert-danger">Error loading booking details: ' + error + '</div>');
         }
     });
 }
@@ -348,5 +361,75 @@ function cancelBooking(bookingId) {
     }
 }
 </script>
+
+<style>
+/* Booking Details Modal Styling */
+#bookingDetailsModal .modal-dialog {
+    max-width: 900px;
+}
+
+#bookingDetailsModal .modal-body {
+    padding: 1.5rem;
+}
+
+#bookingDetailsModal h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+#bookingDetailsModal p {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+#bookingDetailsModal .row {
+    margin-bottom: 1rem;
+}
+
+#bookingDetailsModal .badge {
+    font-size: 0.75em;
+    padding: 0.5em 0.75em;
+}
+
+#bookingDetailsModal .text-success {
+    color: #28a745 !important;
+}
+
+#bookingDetailsModal .text-danger {
+    color: #dc3545 !important;
+}
+
+#bookingDetailsModal .text-warning {
+    color: #ffc107 !important;
+}
+
+#bookingDetailsModal .text-info {
+    color: #17a2b8 !important;
+}
+
+#bookingDetailsModal .border {
+    border: 1px solid #dee2e6 !important;
+}
+
+#bookingDetailsModal .bg-light {
+    background-color: #f8f9fa !important;
+}
+
+/* Icon spacing */
+#bookingDetailsModal i {
+    margin-right: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #bookingDetailsModal .modal-dialog {
+        margin: 1rem;
+        max-width: calc(100% - 2rem);
+    }
+}
+</style>
 
 <?php include 'layouts/footer.php'; ?>

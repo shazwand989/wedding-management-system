@@ -27,7 +27,7 @@ class ToyyibPay
     /**
      * Create a new bill for payment
      */
-    public function createBill($params)
+    public function createBill($params, $pdo = null)
     {
         $billData = [
             'userSecretKey' => $this->secretKey,
@@ -53,10 +53,29 @@ class ToyyibPay
         $response = $this->makeRequest('/index.php/api/createBill', $billData);
         
         if ($response && isset($response[0]['BillCode'])) {
+            $billCode = $response[0]['BillCode'];
+            
+            // Store transaction record in local database if PDO is available
+            if ($pdo && isset($params['billExternalReferenceNo'])) {
+                try {
+                    $stmt = $pdo->prepare("
+                        INSERT INTO toyyibpay_transactions (bill_code, booking_id, amount, status, created_at)
+                        VALUES (?, ?, ?, 'pending', NOW())
+                    ");
+                    $stmt->execute([
+                        $billCode,
+                        $params['billExternalReferenceNo'],
+                        $params['billAmount']
+                    ]);
+                } catch (Exception $e) {
+                    error_log("Failed to store ToyyibPay transaction: " . $e->getMessage());
+                }
+            }
+            
             return [
                 'success' => true,
-                'billCode' => $response[0]['BillCode'],
-                'paymentUrl' => $this->baseUrl . '/' . $response[0]['BillCode']
+                'billCode' => $billCode,
+                'paymentUrl' => $this->baseUrl . '/' . $billCode
             ];
         }
 
@@ -77,7 +96,12 @@ class ToyyibPay
             'billCode' => $billCode
         ];
 
-        return $this->makeRequest('/index.php/api/getBillTransactions', $data);
+        $response = $this->makeRequest('/index.php/api/getBillTransactions', $data);
+        
+        // Log the response for debugging
+        error_log("ToyyibPay getBillTransactions response for bill $billCode: " . json_encode($response));
+        
+        return $response;
     }
 
     /**
@@ -118,18 +142,12 @@ class ToyyibPay
                 throw new Exception('No transactions found for bill code: ' . $billCode);
             }
 
-            // Find the matching transaction
-            $transaction = null;
-            foreach ($transactions as $trans) {
-                if ($trans['billcode'] === $billCode) {
-                    $transaction = $trans;
-                    break;
-                }
-            }
-
-            if (!$transaction) {
-                throw new Exception('Transaction not found');
-            }
+            // Since getBillTransactions() already filters by bill code,
+            // we can use the first transaction returned
+            $transaction = $transactions[0];
+            
+            // Add the bill code to the transaction data for consistency
+            $transaction['billcode'] = $billCode;
 
             // Check if payment is successful (status 1 = successful)
             if ($transaction['billpaymentStatus'] == '1') {
@@ -153,9 +171,18 @@ class ToyyibPay
     private function updatePaymentStatus($transaction, $pdo)
     {
         $billCode = $transaction['billcode'];
-        $transactionId = $transaction['billpaymentTransactionId'] ?? '';
-        $amount = $transaction['billpaymentAmount'] / 100; // Convert back from cents
-        $paymentDate = $transaction['billpaymentDate'] ?? date('Y-m-d');
+        $transactionId = $transaction['billpaymentInvoiceNo'] ?? ''; // Use invoice number as transaction ID
+        $amount = (float)$transaction['billpaymentAmount']; // Amount is already in RM format
+        
+        // Convert ToyyibPay date format (dd-mm-yyyy HH:mm:ss) to MySQL format (YYYY-MM-DD HH:MM:SS)
+        $paymentDateRaw = $transaction['billPaymentDate'] ?? '';
+        if ($paymentDateRaw && $paymentDateRaw !== '0000-00-00 00:00:00') {
+            $dateTime = DateTime::createFromFormat('d-m-Y H:i:s', $paymentDateRaw);
+            $paymentDate = $dateTime ? $dateTime->format('Y-m-d H:i:s') : date('Y-m-d H:i:s');
+        } else {
+            $paymentDate = date('Y-m-d H:i:s');
+        }
+        
         $externalRef = $transaction['billExternalReferenceNo'] ?? '';
 
         // Find the booking by external reference
@@ -193,17 +220,21 @@ class ToyyibPay
                 'ToyyibPay payment - Bill Code: ' . $billCode
             ]);
 
-            // Update booking payment status
+            // Update booking payment status and booking status
             $stmt = $pdo->prepare("
                 UPDATE bookings 
                 SET paid_amount = paid_amount + ?, 
                     payment_status = CASE 
                         WHEN paid_amount + ? >= total_amount THEN 'paid'
                         ELSE 'partial'
+                    END,
+                    booking_status = CASE 
+                        WHEN booking_status = 'pending' AND paid_amount + ? >= total_amount THEN 'confirmed'
+                        ELSE booking_status
                     END
                 WHERE id = ?
             ");
-            $stmt->execute([$amount, $amount, $bookingId]);
+            $stmt->execute([$amount, $amount, $amount, $bookingId]);
 
             $pdo->commit();
 

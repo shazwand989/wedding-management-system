@@ -55,7 +55,21 @@ try {
             break;
 
         case 'get_booking_details':
-            $booking_id = (int)$_GET['id'];
+            $booking_id = (int)($_GET['id'] ?? $_POST['booking_id'] ?? 0);
+            
+            if (!$booking_id) {
+                throw new Exception('Invalid booking ID');
+            }
+            
+            // Build query with access control
+            $where_clause = "WHERE b.id = ?";
+            $params = [$booking_id];
+            
+            // Add access control for customers
+            if ($_SESSION['user_role'] === 'customer') {
+                $where_clause .= " AND b.customer_id = ?";
+                $params[] = $_SESSION['user_id'];
+            }
             
             $stmt = $pdo->prepare("
                 SELECT b.*, u.full_name as customer_name, u.email, u.phone,
@@ -63,9 +77,9 @@ try {
                 FROM bookings b
                 LEFT JOIN users u ON b.customer_id = u.id
                 LEFT JOIN wedding_packages wp ON b.package_id = wp.id
-                WHERE b.id = ?
+                {$where_clause}
             ");
-            $stmt->execute([$booking_id]);
+            $stmt->execute($params);
             $booking = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$booking) {
@@ -202,9 +216,9 @@ try {
             }
 
             // Edit Button for Admin
-            if ($_SESSION['role'] === 'admin') {
+            if (($_SESSION['user_role'] ?? '') === 'admin') {
                 $html .= "<div class='mt-4 text-center'>";
-                $html .= "<a href='edit_booking.php?id={$booking_id}' class='btn btn-primary'>";
+                $html .= "<a href='../admin/edit_booking.php?id={$booking_id}' class='btn btn-primary'>";
                 $html .= "<i class='fas fa-edit'></i> Edit Booking";
                 $html .= "</a>";
                 $html .= "</div>";

@@ -38,7 +38,8 @@ if (!$booking) {
 // Calculate remaining amount
 $remaining_amount = $booking['total_amount'] - $booking['paid_amount'];
 
-if ($remaining_amount <= 0) {
+// Also check payment_status field for additional validation
+if ($remaining_amount <= 0 || $booking['payment_status'] === 'paid') {
     $_SESSION['success_message'] = 'This booking is already fully paid';
     redirectTo('bookings.php');
 }
@@ -81,7 +82,7 @@ if ($_POST && isset($_POST['pay_now'])) {
                 'billPhone' => $booking['phone'] ?: '60123456789'
             ];
             
-            $result = $toyyibpay->createBill($billParams);
+            $result = $toyyibpay->createBill($billParams, $pdo);
             
             if ($result['success']) {
                 // Store payment attempt in session for tracking
