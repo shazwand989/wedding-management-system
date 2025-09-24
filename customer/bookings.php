@@ -272,7 +272,7 @@ include 'layouts/header.php';
                                             </button>
                                         <?php endif; ?>
                                         <?php if ($booking['total_amount'] > $booking['paid_amount'] && $booking['booking_status'] !== 'cancelled'): ?>
-                                            <a href="payments.php?booking_id=<?php echo $booking['id']; ?>" class="btn btn-success btn-sm">
+                                            <a href="payment.php?booking_id=<?php echo $booking['id']; ?>" class="btn btn-success btn-sm">
                                                 <i class="fas fa-credit-card"></i> Pay
                                             </a>
                                         <?php endif; ?>
