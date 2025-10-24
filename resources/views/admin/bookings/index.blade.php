@@ -2,14 +2,22 @@
 
 @section('title', 'Bookings Management')
 
+@section('page-title', 'Bookings')
+
+@section('breadcrumb')
+    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Bookings</li>
+@endsection
+
 @section('content')
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <h2 class="mb-0"><i class="fas fa-calendar-check text-warning"></i> Bookings Management</h2>
-            <p class="text-muted">Manage all wedding bookings</p>
-        </div>
-        <div class="col-md-6 text-end">
+<!--begin::Row-->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <p class="text-muted mb-0">Manage all wedding bookings</p>
+            </div>
+            <div>
             <form action="{{ route('admin.bookings.index') }}" method="GET" class="d-inline-block">
                 <div class="input-group">
                     <input type="text" name="search" class="form-control" placeholder="Search bookings..." value="{{ request('search') }}">
@@ -24,14 +32,19 @@
                         <i class="fas fa-search"></i> Search
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
+</div>
+<!--end::Row-->
 
-    <div class="card">
-        <div class="card-body">
+<!--begin::Row-->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table id="bookingsTable" class="table table-hover table-striped">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -46,7 +59,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($bookings as $booking)
+                        @foreach($bookings as $booking)
                             <tr>
                                 <td>#{{ $booking->id }}</td>
                                 <td>
@@ -85,18 +98,29 @@
                                     </form>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" class="text-center text-muted py-4">No bookings found</td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
         </div>
-        <div class="card-footer">
-            {{ $bookings->links() }}
-        </div>
+    </div>
     </div>
 </div>
+<!--end::Row-->
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    $('#bookingsTable').DataTable({
+        responsive: true,
+        order: [[0, 'desc']],
+        pageLength: 10,
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search bookings..."
+        }
+    });
+});
+</script>
+@endpush

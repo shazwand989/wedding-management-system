@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\Vendor;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -68,6 +69,21 @@ class AdminReportController extends Controller
             ->groupBy('service_type')
             ->get();
 
+        // Total customers and vendors
+        $totalCustomers = User::where('role', 'customer')->count();
+        $totalVendors = Vendor::count();
+
+        // Monthly revenue for chart (12 months)
+        $monthlyRevenue = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $revenue = Payment::where('status', 'completed')
+                ->whereYear('created_at', $month->year)
+                ->whereMonth('created_at', $month->month)
+                ->sum('amount');
+            $monthlyRevenue[] = $revenue;
+        }
+
         return view('admin.reports.index', compact(
             'startDate',
             'endDate',
@@ -79,7 +95,10 @@ class AdminReportController extends Controller
             'revenueByMonth',
             'bookingsByStatus',
             'topPackages',
-            'vendorsByType'
+            'vendorsByType',
+            'totalCustomers',
+            'totalVendors',
+            'monthlyRevenue'
         ));
     }
 }

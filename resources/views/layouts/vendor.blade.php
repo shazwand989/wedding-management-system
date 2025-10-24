@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Admin Dashboard') - Wedding Management</title>
+    <title>@yield('title', 'Vendor Dashboard') - Wedding Management</title>
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -81,19 +81,6 @@
             border-bottom: 3px solid var(--gold-primary);
         }
 
-        /* Navbar */
-        .navbar-light {
-            background-color: white;
-        }
-
-        .navbar-light .navbar-nav .nav-link {
-            color: var(--dark-brown);
-        }
-
-        .navbar-light .navbar-nav .nav-link:hover {
-            color: var(--gold-primary);
-        }
-
         /* Custom Gold Buttons */
         .btn-gold {
             background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
@@ -123,33 +110,6 @@
             color: white;
             border-color: var(--gold-primary);
             box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
-        }
-
-        /* Info Box Colors */
-        .info-box-icon-gold {
-            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
-            color: white;
-        }
-
-        /* Card Headers */
-        .card-primary:not(.card-outline) > .card-header {
-            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
-        }
-
-        /* Small Box */
-        .small-box {
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .small-box .icon {
-            color: rgba(0,0,0,0.15);
-        }
-
-        /* Badge Gold */
-        .badge-gold {
-            background-color: var(--gold-primary);
-            color: white;
         }
 
         /* Breadcrumb */
@@ -187,16 +147,6 @@
             font-weight: 600;
         }
 
-        /* Dropdown Menu */
-        .dropdown-menu {
-            border: 1px solid var(--gold-light);
-        }
-
-        .dropdown-item:hover {
-            background-color: var(--cream);
-            color: var(--gold-dark);
-        }
-
         /* Footer */
         .app-footer {
             border-top: 2px solid var(--gold-primary);
@@ -229,7 +179,7 @@
                         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
                             <span class="dropdown-item dropdown-header">{{ Auth::user()->name }}</span>
                             <div class="dropdown-divider"></div>
-                            <a href="#" class="dropdown-item">
+                            <a href="{{ route('vendor.profile.edit') }}" class="dropdown-item">
                                 <i class="fas fa-user me-2"></i> Profile
                             </a>
                             <div class="dropdown-divider"></div>
@@ -250,9 +200,9 @@
         <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
             <!-- Brand Logo -->
             <div class="sidebar-brand">
-                <a href="{{ route('admin.dashboard') }}" class="brand-link">
-                    <i class="fas fa-rings-wedding brand-image opacity-75"></i>
-                    <span class="brand-text fw-light">Admin Panel</span>
+                <a href="{{ route('vendor.dashboard') }}" class="brand-link">
+                    <i class="fas fa-store brand-image opacity-75"></i>
+                    <span class="brand-text fw-light">Vendor Panel</span>
                 </a>
             </div>
 
@@ -262,45 +212,39 @@
                     <!-- Sidebar Menu -->
                     <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
                         <li class="nav-item">
-                            <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                            <a href="{{ route('vendor.dashboard') }}" class="nav-link {{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-tachometer-alt"></i>
                                 <p>Dashboard</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('admin.bookings.index') }}" class="nav-link {{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}">
+                            <a href="{{ route('vendor.bookings.index') }}" class="nav-link {{ request()->routeIs('vendor.bookings.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-calendar-check"></i>
                                 <p>Bookings</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('admin.customers.index') }}" class="nav-link {{ request()->routeIs('admin.customers.*') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-users"></i>
-                                <p>Customers</p>
+                            <a href="{{ route('vendor.calendar') }}" class="nav-link {{ request()->routeIs('vendor.calendar') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-calendar"></i>
+                                <p>Calendar</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('admin.vendors.index') }}" class="nav-link {{ request()->routeIs('admin.vendors.*') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-store"></i>
-                                <p>Vendors</p>
+                            <a href="{{ route('vendor.services.index') }}" class="nav-link {{ request()->routeIs('vendor.services.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-concierge-bell"></i>
+                                <p>Services</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('admin.packages.index') }}" class="nav-link {{ request()->routeIs('admin.packages.*') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-box"></i>
-                                <p>Packages</p>
+                            <a href="{{ route('vendor.earnings.index') }}" class="nav-link {{ request()->routeIs('vendor.earnings.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-money-bill-wave"></i>
+                                <p>Earnings</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('admin.payments.index') }}" class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-credit-card"></i>
-                                <p>Payments</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.reports.index') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-                                <i class="nav-icon fas fa-chart-bar"></i>
-                                <p>Reports</p>
+                            <a href="{{ route('vendor.profile.edit') }}" class="nav-link {{ request()->routeIs('vendor.profile.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-user-cog"></i>
+                                <p>Profile</p>
                             </a>
                         </li>
                     </ul>
