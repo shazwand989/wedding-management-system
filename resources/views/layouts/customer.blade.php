@@ -155,6 +155,11 @@
                             <i class="fas fa-wallet"></i> Budget
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('customer.events.*') ? 'active' : '' }}" href="{{ route('customer.events.index') }}">
+                            <i class="fas fa-envelope-open-text"></i> Invitations
+                        </a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user-circle"></i> {{ Auth::user()->name }}

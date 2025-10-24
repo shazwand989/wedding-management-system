@@ -1,4 +1,4 @@
-@extends('customer.layouts.app')
+@extends('layouts.customer')
 
 @section('title', 'Manage Guest List - ' . $event->title)
 
