@@ -23,6 +23,10 @@ use App\Http\Controllers\Vendor\VendorEarningsController;
 use App\Http\Controllers\Vendor\VendorProfileController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ToyyibPayCallbackController;
+use App\Http\Controllers\Customer\EventController;
+use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\RsvpController;
+use App\Http\Controllers\CheckInController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +35,11 @@ use App\Http\Controllers\ToyyibPayCallbackController;
 */
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Public Invitation & RSVP Routes
+Route::get('/invitation/{code}', [InvitationController::class, 'show'])->name('invitation.show');
+Route::post('/rsvp/{code}', [RsvpController::class, 'store'])->name('rsvp.submit');
+Route::get('/rsvp/success/{id}', [RsvpController::class, 'success'])->name('rsvp.success');
 
 /*
 |--------------------------------------------------------------------------
@@ -122,6 +131,16 @@ Route::middleware(['auth', 'role:customer'])->prefix('customer')->name('customer
     // Profile
     Route::get('/profile', [CustomerDashboardController::class, 'profile'])->name('profile');
     Route::put('/profile', [CustomerDashboardController::class, 'updateProfile'])->name('profile.update');
+
+    // Events & Invitations
+    Route::resource('events', EventController::class);
+    Route::get('/events/{id}/guests', [EventController::class, 'guests'])->name('events.guests');
+    Route::post('/events/{id}/guests', [EventController::class, 'addGuest'])->name('events.guests.add');
+    Route::post('/events/{id}/send-invitations', [EventController::class, 'sendInvitations'])->name('events.send-invitations');
+
+    // Check-in Scanner
+    Route::get('/events/{eventId}/checkin', [CheckInController::class, 'scanner'])->name('events.checkin');
+    Route::post('/checkin/scan', [CheckInController::class, 'scan'])->name('checkin.scan');
 });
 
 /*
