@@ -26,12 +26,21 @@ class AdminPackageController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'duration_hours' => 'required|integer|min:1',
-            'max_guests' => 'required|integer|min:1',
-            'features' => 'required|array',
-            'features.*' => 'string',
+            'duration_hours' => 'nullable|integer|min:1',
+            'max_guests' => 'nullable|integer|min:1',
+            'features' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ]);
+
+        // Convert features textarea to array
+        if (!empty($validated['features'])) {
+            $validated['features'] = array_filter(
+                array_map('trim', explode("\n", $validated['features'])),
+                fn($item) => !empty($item)
+            );
+        } else {
+            $validated['features'] = [];
+        }
 
         WeddingPackage::create($validated);
 
@@ -41,7 +50,9 @@ class AdminPackageController extends Controller
 
     public function show($id)
     {
-        $package = WeddingPackage::findOrFail($id);
+        $package = WeddingPackage::with(['bookings' => function($query) {
+            $query->with('customer')->orderBy('event_date', 'desc');
+        }])->findOrFail($id);
 
         return view('admin.packages.show', compact('package'));
     }
@@ -61,12 +72,21 @@ class AdminPackageController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'duration_hours' => 'required|integer|min:1',
-            'max_guests' => 'required|integer|min:1',
-            'features' => 'required|array',
-            'features.*' => 'string',
+            'duration_hours' => 'nullable|integer|min:1',
+            'max_guests' => 'nullable|integer|min:1',
+            'features' => 'nullable|string',
             'status' => 'required|in:active,inactive',
         ]);
+
+        // Convert features textarea to array
+        if (!empty($validated['features'])) {
+            $validated['features'] = array_filter(
+                array_map('trim', explode("\n", $validated['features'])),
+                fn($item) => !empty($item)
+            );
+        } else {
+            $validated['features'] = [];
+        }
 
         $package->update($validated);
 

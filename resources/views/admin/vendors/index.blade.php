@@ -24,8 +24,8 @@
                         <select name="status" class="form-select" style="max-width: 150px;">
                             <option value="">All Status</option>
                             <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive</option>
                         </select>
                         <button type="submit" class="btn btn-gold">
                             <i class="fas fa-search"></i> Search
@@ -69,30 +69,42 @@
                                     <td>
                                         @if($vendor->status === 'pending')
                                             <span class="badge bg-warning">Pending</span>
-                                        @elseif($vendor->status === 'approved')
-                                            <span class="badge bg-success">Approved</span>
+                                        @elseif($vendor->status === 'active')
+                                            <span class="badge bg-success">Active</span>
                                         @else
-                                            <span class="badge bg-danger">Rejected</span>
+                                            <span class="badge bg-secondary">Inactive</span>
                                         @endif
                                     </td>
                                     <td>
                                         @if($vendor->status === 'pending')
                                             <form action="{{ route('admin.vendors.approve', $vendor->id) }}" method="POST" class="d-inline">
                                                 @csrf
-                                                <button type="submit" class="btn btn-sm btn-success" title="Approve">
-                                                    <i class="fas fa-check"></i>
+                                                <button type="submit" class="btn btn-sm btn-success" title="Approve" onclick="return confirm('Approve this vendor?')">
+                                                    <i class="fas fa-check"></i> Approve
                                                 </button>
                                             </form>
                                             <form action="{{ route('admin.vendors.reject', $vendor->id) }}" method="POST" class="d-inline">
                                                 @csrf
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Reject">
-                                                    <i class="fas fa-times"></i>
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Reject" onclick="return confirm('Reject this vendor?')">
+                                                    <i class="fas fa-times"></i> Reject
+                                                </button>
+                                            </form>
+                                        @elseif($vendor->status === 'active')
+                                            <span class="badge bg-success"><i class="fas fa-check-circle"></i> Approved</span>
+                                            <form action="{{ route('admin.vendors.reject', $vendor->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-warning btn-sm" title="Deactivate" onclick="return confirm('Deactivate this vendor?')">
+                                                    <i class="fas fa-ban"></i>
                                                 </button>
                                             </form>
                                         @else
-                                            <button class="btn btn-sm btn-outline-gold" disabled>
-                                                <i class="fas fa-eye"></i> View
-                                            </button>
+                                            <span class="badge bg-secondary"><i class="fas fa-times-circle"></i> Inactive</span>
+                                            <form action="{{ route('admin.vendors.approve', $vendor->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-success btn-sm" title="Activate" onclick="return confirm('Activate this vendor?')">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
                                         @endif
                                     </td>
                                 </tr>

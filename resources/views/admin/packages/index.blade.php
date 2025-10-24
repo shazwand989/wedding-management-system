@@ -29,6 +29,8 @@
                                 <th>Name</th>
                                 <th>Description</th>
                                 <th>Price</th>
+                                <th>Duration</th>
+                                <th>Max Guests</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -39,9 +41,11 @@
                                     <td>#{{ $package->id }}</td>
                                     <td><strong>{{ $package->name }}</strong></td>
                                     <td>{{ Str::limit($package->description, 50) }}</td>
-                                    <td><strong>RM {{ number_format($package->price, 2) }}</strong></td>
+                                    <td><strong class="text-gold">RM {{ number_format($package->price, 2) }}</strong></td>
+                                    <td>{{ $package->duration_hours }}h</td>
+                                    <td>{{ $package->max_guests }} pax</td>
                                     <td>
-                                        @if($package->is_active)
+                                        @if($package->status === 'active')
                                             <span class="badge bg-success">Active</span>
                                         @else
                                             <span class="badge bg-secondary">Inactive</span>

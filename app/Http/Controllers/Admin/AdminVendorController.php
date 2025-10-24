@@ -54,7 +54,7 @@ class AdminVendorController extends Controller
     public function reject($id)
     {
         $vendor = Vendor::findOrFail($id);
-        $vendor->update(['status' => 'rejected']);
+        $vendor->update(['status' => 'inactive']);
 
         // You can add email notification here
 
