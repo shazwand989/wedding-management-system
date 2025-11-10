@@ -4,12 +4,14 @@ require_once '../includes/config.php';
 
 // Check if user is logged in and is admin
 if (!isLoggedIn() || getUserRole() !== 'admin') {
+    set_flash_message('Access denied. Please log in as admin.', 'danger');
     redirectTo('../login.php');
 }
 
 $booking_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($booking_id <= 0) {
+    set_flash_message('Invalid booking ID', 'danger');
     redirectTo('bookings.php');
 }
 
@@ -83,10 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Fetch booking details
 try {
     $stmt = $pdo->prepare("
-        SELECT b.*, p.name as package_name, c.name as customer_name, c.email as customer_email
+        SELECT b.*, p.name as package_name, u.full_name as customer_name, u.email as customer_email
         FROM bookings b 
-        LEFT JOIN packages p ON b.package_id = p.id 
-        LEFT JOIN customers c ON b.customer_id = c.id 
+        LEFT JOIN wedding_packages p ON b.package_id = p.id 
+        LEFT JOIN users u ON b.customer_id = u.id 
         WHERE b.id = ?
     ");
     $stmt->execute([$booking_id]);
@@ -98,13 +100,13 @@ try {
     }
     
     // Fetch packages for dropdown
-    $stmt = $pdo->prepare("SELECT id, name, base_price FROM packages ORDER BY name");
+    $stmt = $pdo->prepare("SELECT id, name, price FROM wedding_packages WHERE status = 'active' ORDER BY name");
     $stmt->execute();
     $packages = $stmt->fetchAll();
     
     // Fetch assigned vendors
     $stmt = $pdo->prepare("
-        SELECT bv.*, v.business_name, v.contact_name 
+        SELECT bv.*, v.business_name, v.service_type as vendor_service_type 
         FROM booking_vendors bv 
         JOIN vendors v ON bv.vendor_id = v.id 
         WHERE bv.booking_id = ?
@@ -124,6 +126,7 @@ try {
     $available_vendors = $stmt->fetchAll();
     
 } catch (Exception $e) {
+    set_flash_message('Error fetching booking details: ' . $e->getMessage(), 'danger');
     $_SESSION['error'] = 'Error fetching booking details: ' . $e->getMessage();
     redirectTo('bookings.php');
 }
@@ -226,9 +229,9 @@ include 'layouts/header.php';
                                                 <option value="">No Package</option>
                                                 <?php foreach ($packages as $package): ?>
                                                     <option value="<?php echo $package['id']; ?>" 
-                                                            data-price="<?php echo $package['base_price']; ?>"
+                                                            data-price="<?php echo $package['price']; ?>"
                                                             <?php echo ($booking['package_id'] == $package['id']) ? 'selected' : ''; ?>>
-                                                        <?php echo htmlspecialchars($package['name']); ?> - RM<?php echo number_format($package['base_price'], 2); ?>
+                                                        <?php echo htmlspecialchars($package['name']); ?> - RM<?php echo number_format($package['price'], 2); ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>

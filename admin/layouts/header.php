@@ -29,7 +29,7 @@ if (!isLoggedIn() || getUserRole() !== 'admin') {
     <!-- AdminLTE 3 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2.0/dist/css/adminlte.min.css">
     <!-- DataTables CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/datatables.net-bs4@1.13.7/css/dataTables.bootstrap4.min.css">
     <!-- Custom Wedding Golden Theme -->
     <link rel="stylesheet" href="../assets/css/adminlte-custom.css">
 

@@ -218,6 +218,7 @@ include 'layouts/header.php';
             </div>
         </div>
         <div class="card-body">
+            <?= display_flash_message() ?>
             <div class="table-responsive">
                 <table id="bookingsTable" class="table table-striped table-hover">
                     <thead>
@@ -279,10 +280,10 @@ include 'layouts/header.php';
                                                 <i class="fas fa-eye"></i>
                                             </button>
 
-                                            <!-- Edit button -->
-                                            <a href="edit_booking.php?id=<?php echo $booking['id']; ?>" class="btn btn-sm btn-outline-info" title="Edit Booking">
+                                            <!-- Edit button (JavaScript enhanced) -->
+                                            <button type="button" class="btn btn-sm btn-outline-info" onclick="editBookingEnhanced(<?php echo $booking['id']; ?>)" title="Edit Booking #<?php echo $booking['id']; ?>">
                                                 <i class="fas fa-edit"></i>
-                                            </a>
+                                            </button>
 
                                             <!-- Status dropdown -->
                                             <div class="btn-group" role="group">
@@ -340,215 +341,248 @@ include 'layouts/header.php';
             </div>
         </div>
     </div>
-    </section>
+</div>
+<?php include 'layouts/footer.php'; ?>
 
-    <?php include 'layouts/footer.php'; ?>
-
-    <script>
-        function updateStatus(bookingId, status) {
-            Swal.fire({
-                title: 'Update Booking Status?',
-                text: `Are you sure you want to change the booking status to "${status}"?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#007bff',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, update it!',
-                cancelButtonText: 'Cancel'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Updating...',
-                        text: 'Please wait while we update the booking status.',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        showConfirmButton: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-
-                    $.ajax({
-                        url: 'bookings.php',
-                        type: 'POST',
-                        data: {
-                            action: 'update_status',
-                            booking_id: bookingId,
-                            status: status
-                        },
-                        dataType: 'json',
-                        success: function(data) {
-                            if (data.success) {
-                                Swal.fire({
-                                    title: 'Updated!',
-                                    text: 'Booking status has been updated successfully.',
-                                    icon: 'success',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire('Error!', data.message || 'An error occurred while updating the booking status.', 'error');
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error(error);
-                            Swal.fire('Error!', 'An error occurred while updating the booking status.', 'error');
-                        }
-                    });
-                }
-            });
-        }
-
-        function deleteBooking(bookingId) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'You won\'t be able to revert this! This action cannot be undone.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'Cancel',
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Deleting...',
-                        text: 'Please wait while we delete the booking.',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        showConfirmButton: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-                        }
-                    });
-
-                    $.ajax({
-                        url: 'bookings.php',
-                        type: 'POST',
-                        data: {
-                            action: 'delete_booking',
-                            booking_id: bookingId
-                        },
-                        dataType: 'json',
-                        success: function(data) {
-                            if (data.success) {
-                                Swal.fire({
-                                    title: 'Deleted!',
-                                    text: 'Booking has been deleted successfully.',
-                                    icon: 'success',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire('Error!', data.message || 'An error occurred while deleting the booking.', 'error');
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error(error);
-                            Swal.fire('Error!', 'An error occurred while deleting the booking.', 'error');
-                        }
-                    });
-                }
-            });
-        }
-
-        function viewBooking(bookingId) {
-            $.ajax({
-                url: '../includes/ajax_handler.php',
-                type: 'GET',
-                data: {
-                    action: 'get_booking_details',
-                    id: bookingId
-                },
-                dataType: 'json',
-                success: function(data) {
-                    if (data.success) {
-                        $('#bookingDetails').html(data.html);
-                        $('#bookingModal').modal('show');
-                    } else {
-                        Swal.fire('Error!', data.message || 'Unknown error', 'error');
+<script>
+    function updateStatus(bookingId, status) {
+        Swal.fire({
+            title: 'Update Booking Status?',
+            text: `Are you sure you want to change the booking status to "${status}"?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#007bff',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, update it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Updating...',
+                    text: 'Please wait while we update the booking status.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
                     }
-                },
-                error: function(xhr, status, error) {
-                    console.error(error);
-                    Swal.fire('Error!', 'Error loading booking details. Please try again.', 'error');
-                }
-            });
-        }
+                });
 
-        function exportBookings() {
-            const params = new URLSearchParams(window.location.search);
-            params.set('export', '1');
-            window.location.href = 'bookings.php?' + params.toString();
-        }
-
-        // Initialize DataTable
-        $(document).ready(function() {
-            $('#bookingsTable').DataTable({
-                "responsive": true,
-                "lengthChange": true,
-                "autoWidth": false,
-                "pageLength": 25,
-                "lengthMenu": [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
-                ],
-                "order": [
-                    [2, "desc"]
-                ], // Sort by event date descending
-                "columnDefs": [{
-                        "targets": [9], // Actions column
-                        "orderable": false,
-                        "searchable": false
+                $.ajax({
+                    url: 'bookings.php',
+                    type: 'POST',
+                    data: {
+                        action: 'update_status',
+                        booking_id: bookingId,
+                        status: status
                     },
-                    {
-                        "targets": [0], // ID column
-                        "width": "80px"
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Updated!',
+                                text: 'Booking status has been updated successfully.',
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Error!', data.message || 'An error occurred while updating the booking status.', 'error');
+                        }
                     },
-                    {
-                        "targets": [6, 7], // Amount and Payment columns
-                        "className": "text-right"
-                    },
-                    {
-                        "targets": [8], // Status column
-                        "className": "text-center"
-                    },
-                    {
-                        "targets": [9], // Actions column
-                        "className": "text-center",
-                        "width": "150px"
+                    error: function(xhr, status, error) {
+                        console.error(error);
+                        Swal.fire('Error!', 'An error occurred while updating the booking status.', 'error');
                     }
-                ],
-                "language": {
-                    "search": "Search bookings:",
-                    "lengthMenu": "Show _MENU_ bookings per page",
-                    "info": "Showing _START_ to _END_ of _TOTAL_ bookings",
-                    "infoEmpty": "No bookings available",
-                    "infoFiltered": "(filtered from _MAX_ total bookings)",
-                    "zeroRecords": "No matching bookings found",
-                    "emptyTable": "No bookings available in table",
-                    "paginate": {
-                        "first": "First",
-                        "last": "Last",
-                        "next": "Next",
-                        "previous": "Previous"
-                    }
-                },
-                "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
-                    "<'row'<'col-sm-12'tr>>" +
-                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
-            });
-
-            // Custom filter integration
-            const table = $('#bookingsTable').DataTable();
-
-            // Clear any existing DataTable search when using custom filters
-            $('form[method="GET"]').on('submit', function() {
-                table.search('').draw();
-            });
+                });
+            }
         });
-    </script>
+    }
+
+    function deleteBooking(bookingId) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You won\'t be able to revert this! This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Deleting...',
+                    text: 'Please wait while we delete the booking.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.ajax({
+                    url: 'bookings.php',
+                    type: 'POST',
+                    data: {
+                        action: 'delete_booking',
+                        booking_id: bookingId
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Deleted!',
+                                text: 'Booking has been deleted successfully.',
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Error!', data.message || 'An error occurred while deleting the booking.', 'error');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(error);
+                        Swal.fire('Error!', 'An error occurred while deleting the booking.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    function viewBooking(bookingId) {
+        $.ajax({
+            url: '../includes/ajax_handler.php',
+            type: 'GET',
+            data: {
+                action: 'get_booking_details',
+                id: bookingId
+            },
+            dataType: 'json',
+            success: function(data) {
+                if (data.success) {
+                    $('#bookingDetails').html(data.html);
+                    $('#bookingModal').modal('show');
+                } else {
+                    Swal.fire('Error!', data.message || 'Unknown error', 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error(error);
+                Swal.fire('Error!', 'Error loading booking details. Please try again.', 'error');
+            }
+        });
+    }
+
+    function exportBookings() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('export', '1');
+        window.location.href = 'bookings.php?' + params.toString();
+    }
+
+    // Initialize DataTable
+    $(document).ready(function() {
+        $('#bookingsTable').DataTable({
+            "responsive": true,
+            "lengthChange": true,
+            "autoWidth": false,
+            "pageLength": 25,
+            "lengthMenu": [
+                [10, 25, 50, 100, -1],
+                [10, 25, 50, 100, "All"]
+            ],
+            "order": [
+                [2, "desc"]
+            ], // Sort by event date descending
+            "columnDefs": [{
+                    "targets": [9], // Actions column
+                    "orderable": false,
+                    "searchable": false
+                },
+                {
+                    "targets": [0], // ID column
+                    "width": "80px"
+                },
+                {
+                    "targets": [6, 7], // Amount and Payment columns
+                    "className": "text-right"
+                },
+                {
+                    "targets": [8], // Status column
+                    "className": "text-center"
+                },
+                {
+                    "targets": [9], // Actions column
+                    "className": "text-center",
+                    "width": "150px"
+                }
+            ],
+            "language": {
+                "search": "Search bookings:",
+                "lengthMenu": "Show _MENU_ bookings per page",
+                "info": "Showing _START_ to _END_ of _TOTAL_ bookings",
+                "infoEmpty": "No bookings available",
+                "infoFiltered": "(filtered from _MAX_ total bookings)",
+                "zeroRecords": "No matching bookings found",
+                "emptyTable": "No bookings available in table",
+                "paginate": {
+                    "first": "First",
+                    "last": "Last",
+                    "next": "Next",
+                    "previous": "Previous"
+                }
+            },
+            "dom": "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        });
+
+        // Custom filter integration
+        const table = $('#bookingsTable').DataTable();
+
+        // Clear any existing DataTable search when using custom filters
+        $('form[method="GET"]').on('submit', function() {
+            table.search('').draw();
+        });
+    });
+
+    // 🔧 Edit Booking Navigation Fix
+    function editBookingEnhanced(bookingId) {
+        console.log('🔧 Edit booking clicked for ID:', bookingId);
+
+        // Show loading state
+        const button = event.target.closest('.btn');
+        const originalHtml = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+
+        // Validate booking ID
+        if (!bookingId || bookingId <= 0) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Invalid booking ID: ' + bookingId,
+                icon: 'error'
+            });
+            button.innerHTML = originalHtml;
+            button.disabled = false;
+            return false;
+        }
+
+        // Create edit URL and navigate
+        const editUrl = 'edit_booking.php?id=' + bookingId;
+        console.log('Navigating to:', editUrl);
+
+        // Small delay to show loading feedback, then navigate
+        setTimeout(() => {
+            window.location.href = editUrl;
+        }, 500);
+
+        return false;
+    }
+</script>

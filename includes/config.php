@@ -9,6 +9,8 @@ define('DB_NAME', 'wedding_management');
 define('SITE_URL', 'https://shazwan-danial.my/wedding-management-system/');
 define('SITE_NAME', 'Wedding Management System');
 
+include_once __DIR__ . '/functions.php';
+
 // Create connection
 try {
     $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASS);
