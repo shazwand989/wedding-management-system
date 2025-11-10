@@ -1,7 +1,3 @@
--- Create database
-CREATE DATABASE IF NOT EXISTS wedding_management;
-USE wedding_management;
-
 -- Users table (admin, customers, vendors)
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -198,14 +194,13 @@ CREATE TABLE budget_expenses (
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Add missing columns to users table for profile management
-ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth DATE NULL;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS gender ENUM('male', 'female', 'other') NULL;
-ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT NULL;
+-- Add missing columns to users table for profile management (with error handling)
+ALTER TABLE users ADD COLUMN date_of_birth DATE NULL;
+ALTER TABLE users ADD COLUMN gender ENUM('male', 'female', 'other') NULL;
 
 -- Add missing columns to vendors table for better filtering
-ALTER TABLE vendors ADD COLUMN IF NOT EXISTS location VARCHAR(255) NULL;
-ALTER TABLE vendors ADD COLUMN IF NOT EXISTS specialties TEXT NULL;
+ALTER TABLE vendors ADD COLUMN location VARCHAR(255) NULL;
+ALTER TABLE vendors ADD COLUMN specialties TEXT NULL;
 
 -- Insert sample timeline tasks
 INSERT INTO wedding_tasks (customer_id, task_title, description, due_date, priority, status) VALUES 
